@@ -1,111 +1,179 @@
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import menuItems from "./helper/ListMenu";
+import { RootState, useAppDispatch } from "../../store/configureStore";
+// import { getDataTable , } from "../tableMarketwatch/tableSlice";
+import {
+  HandleKeyActiveMain,
+  getDataCookie,
+  getDataTable,
+} from "../tableMarketwatch/tableTestSlice";
+import { useSelector } from "react-redux";
+import { activeMenuDanhmuc, historyPriceActiveMenu } from "./danhmucSlice";
+import { setActiveMenu } from "./menuSlice";
+import { setCookie } from "../../models/cookie";
 
 interface MenuItem {
   name: string;
   path: string;
+  query: string;
+  floor: string;
   children?: MenuItem[];
 }
 
-interface Props {
-  items: MenuItem[];
-}
-
-// const activeItem = localStorage.getItem("activePriceboardTab");
-// const activeItemChild = localStorage.getItem("activePriceboardTabMenu");
-
-const MenuBar: React.FC<Props>  = ({items}) => {
-  
-  const activeItem = localStorage.getItem("activePriceboardTab");
-  const activeItemChild = localStorage.getItem("activePriceboardTabMenu");
-  const [activeMenuItem, setActiveMenuItem] = useState<string | null>(null);
-    const [activeMenuItemChild, setActiveMenuItemChild] = useState<string | null>(null);
-    useEffect(() => {
-      // Load active item from localStorage
-      const activeItem = localStorage.getItem("activePriceboardTab");
-      const activeItemChild = localStorage.getItem("activePriceboardTabMenu");
-      // console.log(activeItem)
-      if (activeItem) {
-        setActiveMenuItem(activeItem);
-      }
-      if (activeItemChild) {
-        setActiveMenuItemChild(activeItemChild);
-      }
-    }, []);
-  const handleItemClick = (path: string) => {
-    
-    setActiveMenuItem(path);
-    localStorage.setItem("activePriceboardTab", path);
-    console.log(path)
+const MenuBar = () => {
+  const dispatch = useAppDispatch();
+  const [activeMenuItemName, setActiveMenuItemChild] = useState<string | null>(
+    null
+  ); // teen menu item
+  const { row, name, data } = useSelector(
+    (state: RootState) => state.categories
+  );
+  const { keyMenu, nameMenu } = useSelector(
+    (state: RootState) => state.menuBar
+  );
+  const handleItemClick = (path: string, key: number) => {
+    // setIsActiveMenu(key);
+    // setactiveNameFloor(path);
+    // localStorage.setItem("activePriceboarFloor", path);
+    // click set lại active menu
+    let activeCate = {
+      row: null,
+      name: "",
+    };
+    dispatch(activeMenuDanhmuc(activeCate)); // cập nhật lại active danh mục
   };
-  const handleItemChildClick = (path: string,name:string) => {
-    setActiveMenuItemChild(path);
+  // call api
+  const handleItemChildClick = async (
+    key: number,
+    name: string,
+    query: string,
+    floor: string,
+    KeyMenuChildren?: any
+  ) => {
+    setActiveMenuItemChild(name);
     localStorage.setItem("activePriceboardTabMenu", name);
-    //localStorage.setItem("activePriceboardTab", path);
-    console.log(path)
+    let data = {
+      Floor: floor,
+      Query: query,
+      RowPined: null,
+      KeyMenuChildren : KeyMenuChildren
+    };
+    let activeMenu = {
+      nameMenu: name,
+      keyMenu: key,
+    };
+    let cookie = {
+      tab: name,
+      codeList: "",
+    };
+    // name = tab
+    setCookie(cookie);
+    dispatch(setActiveMenu(activeMenu)); // cập nhật lại menu
+    dispatch(historyPriceActiveMenu())// cập lại menu category
+    dispatch(HandleKeyActiveMain()) // check  call menu category
+    let result = await dispatch(getDataTable(data));
+    if (result?.payload) {
+      dispatch(getDataCookie(cookie.codeList)); // cập nhật lại menu
+    }
   };
-  const renderMenuItemChild =(item:MenuItem) =>{
-    //console.log(item)
-    //console.log(Object.keys(item))
-    return(
-      <li  key={item.path}
-      
-      onClick={() => handleItemChildClick(item.path,item.name)}
-      >
-        <Link  to={item.path} 
-        className={`${ activeMenuItemChild === item.path ? 'active' : ''} `}
-         >
-        {item.name}
-        </Link>
-      </li>
-    )
-  }
-  const renderMenuItemChildS =(item:MenuItem,index:number) =>{
-    return(
-      <li  key={index}
-      className={`${ index % 2 === 0 ? "float-left" : "float-right" }`}
-      onClick={() => handleItemChildClick(item.path,item.name)}
-      >
-        <Link  to={item.path} 
-        className={`${ activeMenuItemChild === item.path ? 'active' : ''} `}
-         >
-        {item.name}
-        </Link>
-      </li>
-    )
-  }
-  const renderMenuItem = (item: MenuItem) => {
- 
-    // const isActive = item.path === activeItem;
+  const renderMenuItem = (item: any, key: number) => {
     return (
       <div
-        key={item.path}
-        className={`group list-sub-menu ${ activeMenuItem === item.path ? 'active' : ''} `}
-
-        onClick={() => handleItemClick(item.path)}
+        key={key}
+        className={`group list-sub-menu ${
+          !row && !name && keyMenu === key ? "active" : ""
+        } `}
+        onClick={() => handleItemClick(item.path, key)}
       >
-        <span  className='text-13px' >{item.name}{ activeMenuItem === item.path ? activeItemChild?.replace("",": ") : ''}</span>
-      {item.children && item.children.length <=9 ? (
-          // <ul className={`${isActive ? "active" : ""} sub-menu`}>
-            <ul className='absolute hidden text-black group-hover:block z-40 sub-menu'>
-            {item.children?.map((child) => renderMenuItemChild(child))}
-            
+        <span className="text-13px">
+          {item.name}
+          {keyMenu === key
+            ? nameMenu
+              ? `: ${
+                  nameMenu.length > 15
+                    ? nameMenu.slice(0, 15)+"..."
+                    : nameMenu
+                }`
+              : "" + nameMenu?.replace(" ", "")
+            : " "}
+        </span>
+        {item.children && item.children.length <= 9 ? (
+          <ul
+            className="absolute hidden text-black group-hover:block z-40 sub-menu"
+            key={item.path}
+          >
+            {item.children?.map((child: any, index: number) => {
+              return (
+                <li
+                  key={index}
+                  onClick={() =>
+                    handleItemChildClick(
+                      key,
+                      child.name,
+                      child.query,
+                      item.floor,
+                      index
+                    )
+                  }
+                >
+                  <Link
+                    to=""
+                    className={`${
+                      activeMenuItemName === child.name ? "active" : ""
+                    } `}
+                  >
+                    {child.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
-        ):(
-        <div>
-           <ul className='absolute hidden text-black group-hover:block z-40 sub-menu dropdown-menu-price'>
-            {item.children?.map((child,index) => renderMenuItemChildS(child,index))}
-            
-          </ul>
-        </div>
+        ) : (
+          <div key={item.path}>
+            <ul
+              className="absolute hidden text-black group-hover:block z-40 sub-menu dropdown-menu-price"
+              key={item.path}
+            >
+              {item.children?.map((child: any, index: number) => {
+                return (
+                  <li
+                    key={index}
+                    className={`${
+                      index % 2 === 0 ? "float-left" : "float-right"
+                    }`}
+                    onClick={() =>
+                      handleItemChildClick(
+                        key,
+                        child.name,
+                        child.query,
+                        item.floor,
+                        index
+                      )
+                    }
+                  >
+                    <Link
+                      to=""
+                      className={`${
+                        activeMenuItemName === child.name ? "active" : ""
+                      } `}
+                    >
+                      {child.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </div>
     );
   };
-    return <div className='flex menu-table'>
-      {items.map((item) => renderMenuItem(item))}
-      
-      </div>;
-}
+  return (
+    <div className="flex menu-table">
+      {menuItems.map((item, key) => renderMenuItem(item, key))}
+    </div>
+  );
+};
 
-export default React.memo(MenuBar)
+export default React.memo(MenuBar);

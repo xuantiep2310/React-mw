@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
+import SlidesMarketWatch from "../indexMarketWatch/SlidesMarketWatch";
 
 const SlidesIndexChartMarketwatch = () => {
   return (
-    <div>SlidesIndexChartMarketwatch</div>
-  )
-}
+    <>
+      <SlidesMarketWatch />
+    </>
+  );
+};
 
-export default SlidesIndexChartMarketwatch
+export default SlidesIndexChartMarketwatch;

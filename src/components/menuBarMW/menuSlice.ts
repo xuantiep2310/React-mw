@@ -9,7 +9,6 @@ interface TableState {
 function getAxiosParams(tableParams: TableParams) {
   const params = new URLSearchParams();
 
-  console.log(params);
 
   if (tableParams.s) params.append("s", tableParams.s?.toString());
 
@@ -19,10 +18,14 @@ function getAxiosParams(tableParams: TableParams) {
 }
 interface ComponentState {
     statusChart: boolean;
+    keyMenu : number,
+    nameMenu :any,
   }
   
   const initialState: ComponentState = {
     statusChart: true,
+    keyMenu : 0,
+    nameMenu : "",
   };
 const menuSlice = createSlice({
     name: 'component',
@@ -31,8 +34,16 @@ const menuSlice = createSlice({
       setStatusChart(state, action) {
         state.statusChart = action.payload;
       },
+      setActiveMenu  (state, action) {
+        state.nameMenu = action.payload?.nameMenu;
+        state.keyMenu = action.payload?.keyMenu;
+      },
+      setHistoryMenu :  ( state)=> {
+          state.keyMenu = 4
+          state.nameMenu = "Thống kê Giá"
+      } 
     },
 });
 
-export const { setStatusChart } = menuSlice.actions;
+export const { setStatusChart , setActiveMenu ,setHistoryMenu } = menuSlice.actions;
 export default menuSlice;

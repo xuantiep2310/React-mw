@@ -46,14 +46,14 @@ var g_ARRAY_CLASSIFY_NAME = [
 // }
 
 export const g_arrHOMarketStatus = [
-    ['P', 'Bắt đầu đợt KL định kỳ mở cửa', ], // ATO
-    ['O', 'Bắt đầu đợt KL lien tục', ],    // continous
-    ['A', 'Bắt đầu đợt KL định kỳ đóng cửa', ], // ATC
-    ['C', 'Đóng cửa MainBoard', ],
+    ['P', 'ATC', ], // ATO
+    ['O', 'Liên tục', ],    // continous
+    ['A', 'ATC', ], // ATC
+    ['C', 'Đóng cửa', ],
     ['F', 'Kết thúc nghỉ giữa đợt', ],
     ['H', 'Ngưng giao dịch tất cả CK', ],
     ['I', 'Bắt đầu nghỉ giữa đợt', ],
-    ['K', 'Kết thúc đợt Runn-off', ],
+    ['K', 'Đóng cửa', ],
     ['N', 'Giao dịch trở lại của CK cụ thể', ],
     ['R', 'Giao dịch trở lại tất cả CK', ],
     ['G', 'Đóng cửa', ],
