@@ -14,7 +14,6 @@ import StockBalance from "./StockBalance";
 import RecordPending from "./RecordPending";
 import { AppContext } from "../../Context/AppContext";
 import { useSelector } from "react-redux";
-import Ring from "../notifications/Ring";
 type Props ={
   windowHeight:number,
   heightOrderForm:number
@@ -74,7 +73,7 @@ const OrderMarketW = () => {
   //  const showSell =() => setColor(false);
   return (
     <div className="bg-white text-black" id="tablepricelist">
-      
+     
 
       {/* đặt lệnh */}
       <div className="panel-bottom pb-5">
@@ -307,10 +306,7 @@ const OrderMarketW = () => {
         </div>
         {order? <></>:  <div className="bottom-center"><img src={IconNext}></img></div>}
         {order? <></>:  <RecordPending/>}
-        <div style={{marginLeft: '100px'}}>
-        <Ring />
-        </div>
-        
+      
       </div>
       </div>
       

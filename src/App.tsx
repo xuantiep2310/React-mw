@@ -6,7 +6,6 @@ import SlidesMarketWatch from "./components/indexMarketWatch/SlidesMarketWatch";
 import DraggableDiv from "./pages/dragable";
 import DynamicDashboard from "./components/dynamicDashboard/DynamicDashboard";
 import MyLayout from "./components/dynamicDashboard/MyLayout";
-import Ring from "./components/notifications/Ring";
 function App() {
          
   
@@ -23,7 +22,6 @@ function App() {
         {/* <Route path="/chung-khoan/danh-muc/:id" element={<LayoutMarketWatch />} /> */}
         <Route path="/report/ClientActivityRange" element={<SlidesMarketWatch />} />
         <Route path="/report/TradeLog" element={<DraggableDiv />} />
-        <Route path="/ring" element={<Ring />} />
         {/* <Route path="/chung-khoan" element={<LayoutMarketWatch />} />    */}
       </Routes>
       </AppProvider>
