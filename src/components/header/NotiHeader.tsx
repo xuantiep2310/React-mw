@@ -123,16 +123,16 @@ const NotiHeader = () => {
                   id="scrollpagination"
                 >
                   <ul id="contentLoader">
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                          {/* <img src={TinvestmentSVG} alt="oke"/> */}
-                          <ReportIconSVG/>
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
+                        <li>
+                        <div className="anchorContainer">
+                          <div className="content__loadmore">
+                            <div className="img__content__lfloat">
+                            {/* <img src={TinvestmentSVG} alt="oke"/> */}
+                            <ReportIconSVG/>
+                            </div>
+                            <div className="content__detail">
+                              <div className="con__detail__title">
+                                <span className="content__detail__title">
                                 Báo cáo phân tích kỹ thuật mã TLH
                                 <span />
                               </span>
