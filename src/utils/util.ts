@@ -1,5 +1,12 @@
 import { g_ARRAY_COLOR_CLASS, g_ID_TD_STAT_CONTROLCODE, g_arrHAMarketStatus, g_arrHOMarketStatus, g_arrUPMarketStatus } from "../configs/app.config";
-
+export function formatNumbertoDecimal(number:any) {
+  const decimalPart = number % 1;
+  if (decimalPart !== 0) {
+    return number.toFixed(2);
+  } else {
+    return number.toString();
+  }
+}
 export function formatNumber(number: any) {
   if (!number || number === 0 || number === "0") return 0; // hoac ''
   else return number.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
@@ -7,6 +14,10 @@ export function formatNumber(number: any) {
 export function formatNumberMarket(number: any) {
   if (!number || number === 0 || number === "0") return ""; // hoac ''
   else return number.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+}
+export const formatNumberPhanTram = (number: any)=>{
+  var roundedNumber = Math.round(number * 100) / 100;
+  return roundedNumber
 }
 export function tinhGiaTC(tc: number, price: number) {
   const diff = price - tc;
@@ -67,7 +78,6 @@ export const setColorMarket = (
   tran: number,
   san: number
 ) => {
-  console.log(tc,price,tran,san)
   let Color = "text-black";
   // if(price=== san){
   //     Color="text-blue"
@@ -194,9 +204,7 @@ export const checkSTTMarketValue = (value: string, status?: string) => {
 // status sàn HNX
 export const fStatusMarketHNX = (value?:string) =>{
     let valueStatus = ""
-    g_arrHAMarketStatus.map((g_HNXStatus)=>{
-      //console.log(g_HNXStatus[0])
-         
+    g_arrHAMarketStatus.forEach((g_HNXStatus) => {
           if(g_HNXStatus[0] === value){
             valueStatus= g_HNXStatus[1]
           }
@@ -205,35 +213,26 @@ export const fStatusMarketHNX = (value?:string) =>{
     return valueStatus
   }
   // status HSX
-  export const fStatusMarketHSX = (value?:string) =>{
-    // console.log(value)
-    let valueStatus = ""
-    g_arrHOMarketStatus.map((g_HSXStatus)=>{
-      //console.log(g_HNXStatus[0])
-         
-          if(g_HSXStatus[0] === value){
-            valueStatus= g_HSXStatus[1]
-            // console.log(valueStatus)
-          }
-    })
-   
-    return valueStatus
-  }
+  export const fStatusMarketHSX = (value?: string) => {
+    let valueStatus = "";
+    g_arrHOMarketStatus.forEach((g_HSXStatus: any) => {
+      if (g_HSXStatus[0] === value) {
+        valueStatus = g_HSXStatus[2];
+      }
+    });
+  
+    return valueStatus;
+  };
   //status sàn UPCOM
   export const fStatusMarketUPCOM = (value?:string) =>{
-    // console.log(value)
     let valueStatus = ""
-    g_arrUPMarketStatus.map((g_UPCStatus)=>{
-      //console.log(g_HNXStatus[0])
-         
+    g_arrUPMarketStatus.forEach((g_UPCStatus)=>{  
           if(g_UPCStatus[0] === value){
             valueStatus= g_UPCStatus[1]
           }
           
     })
-    // console.log(valueStatus)
     return valueStatus;
-
   }
   export const HNXStatus =() =>{
     
@@ -243,7 +242,7 @@ var ARRAY_EXCHANGE = [
   ["HA", "HNX.NY"],
   ["UP", "HNX.UPCOM"],
 ];
-function getCookie(cname: any) {
+export function getCookie(cname: any) {
   let name = cname + "=";
   let decodedCookie = decodeURIComponent(document.cookie);
   let ca = decodedCookie.split(";");
@@ -259,26 +258,29 @@ function getCookie(cname: any) {
   return "";
 }
 export const g_arrCompanyInfo = localStorage.getItem("CacheSI");
-console.log("first company info", g_arrCompanyInfo)
+// console.log("first company info", g_arrCompanyInfo)
 const cachedValue = localStorage.getItem("CacheSI");
 const g_arrStockInfo = cachedValue ? JSON.parse(cachedValue) : [];
 const g_CurrentLanguage = getCookie("aspfpt_language");
 // HO => HOSE; HA => HNX.NY; UP => HNX.UPCOM
 const mapCompanyName = () => {
   // console.log(g_arrStockInfo)
-  const arr = [...g_arrStockInfo];
-  if (arr) {
-    return arr.map(function (v) {
-      return {
-        cpnyID: parseInt(v.ID),
-        stock_code: v.Code,
-        CodeID: 0,
-        Ex: exChangeConvert(v.Exchange),
-        name: g_CurrentLanguage === "VN" ? v.ScripName : v.ScripNameEN,
-      };
-    });
+  if(g_arrStockInfo){
+    const arr = [...g_arrStockInfo];
+    if (arr) {
+      return arr.map(function (v) {
+        return {
+          cpnyID: parseInt(v.ID),
+          stock_code: v.Code,
+          CodeID: 0,
+          Ex: exChangeConvert(v.Exchange),
+          name: g_CurrentLanguage === "VN" ? v.ScripName : v.ScripNameEN,
+        };
+      });
+    }
+    console.log(arr);
   }
-  console.log(arr);
+ 
 };
 
 // mapCompanyName();
@@ -292,14 +294,14 @@ const exChangeConvert = (number: number) => {
       return "HO";
   }
 };
-const listDataCompany = mapCompanyName();
-//console.log(listDataCompany)
+export const listDataCompany = mapCompanyName();
+// console.log(listDataCompany)
 const getExchangeName = (vEx: string) => {
   for (var i = 0; i < ARRAY_EXCHANGE.length; i++)
     if (vEx === ARRAY_EXCHANGE[i][0]) return ARRAY_EXCHANGE[i][1];
 };
 export const getCompanyNameByCode = (vStockCode: string) => {
-  // console.log("vo day ne",vStockCode)
+  console.log("vo day ne",vStockCode)
   // if(g_arrCompanyInfo) {
   //     let name = g_arrCompanyInfo.find((element:any)=>element.Code === vStockCode);
   // }
@@ -358,4 +360,134 @@ export const colorTextMenu = (price: number) => {
 
   return Color;
 };
+var STR_BASIC = 'basic';
+var STR_REPORT = 'report';
+var ARRAY_BASIC = [
+  "Giá trị vốn hóa thị trường",
+  "KLNY hiện tại",
+  "KLĐLH hiện tại",
+  "KLGD bq 30 ngày",
+  "Giá cao nhất 52 tuần",
+  "Giá thấp nhất 52 tuần",
+  "Tỷ lệ sở hữu nước ngoài",
+  "EPS*",
+  "P/E*",
+  "EPS điều chỉnh*",
+  "EPS(FPTS)**",
+  "P/E(FPTS)**"
+];
+var ARRAY_REPORT_0 = [
+  "Doanh thu bán hàng và cung cấp dịch vụ",
+  "Lợi nhuận gộp về bán hàng và cung cấp dịch vụ",
+  "Lợi nhuận (lỗ) thuần từ hoạt động kinh doanh",
+  "Tổng lợi nhuận (lỗ) kế toán trước thuế",
+  "Lợi nhuận (lỗ) sau thuế TNDN",
+  "TÀI SẢN NGẮN HẠN",
+  "TỔNG CỘNG TÀI SẢN",
+  "Nợ ngắn hạn",
+  "Nợ dài hạn",
+  "VỐN CHỦ SỞ HỮU",
+  "Vốn đầu tư của chủ sở hữu",
+  "Cập nhật đến quý"
+]
+var ARRAY_REPORT_1 = [
+  "Thu nhập lãi và các khoản thu nhập tương tự",
+  "Lãi/lỗ thuần từ hoạt động dịch vụ",
+  "Lợi nhuận thuần từ hoạt động kinh doanh trước chi phí dự phòng rủi ro tín dụng",
+  "Lợi nhuận sau thuế",
+  "TỔNG TÀI SẢN CÓ",
+  "Cho vay khách hàng",
+  "Tiền gửi khách hàng",
+  "TỔNG VỐN CHỦ SỞ HỮU",
+  "Cập nhật đến quý"
+]
+var ARRAY_REPORT_2 = [
+  "Doanh thu thuần",
+  "Chi phí hoạt động",
+  "Lợi nhuận/(lỗ) từ hoạt động kinh doanh",
+  "Lợi nhuận trước thuế",
+  "Lợi nhuận sau thuế",
+  "TỔNG CỘNG TÀI SẢN",
+  "TÀI SẢN NGẮN HẠN",
+  "Nợ phải trả",
+  "Nợ ngắn hạn",
+  "Nợ dài hạn",
+  "VỐN CHỦ SỞ HỮU",
+  "Vốn đầu tư của chủ sở hữu",
+  "Cập nhật đến quý"
+]
+var ARRAY_REPORT_3 = [
+  "Doanh thu thuần hoạt động kinh doanh bảo hiểm",
+  "Lợi nhuận sau thuế thu nhập doanh nghiệp",
+  "TỔNG CỘNG TÀI SẢN",
+  "VỐN CHỦ SỞ HỮU",
+  "Cập nhật đến quý"
+]
+export const subStringData = (str:string, table?:string) => {
+  var arr:any = [], subStr1, type = '', arrName:any = [];
+  if (str.length === 0) {
+      return arr;
+  }
+  if (str.indexOf('@|@') > -1) {
+      str = str.replace('@|@', '@');
+  }
+  subStr1 = str.split('@');
+  if (table === STR_BASIC) {
+      arrName.push.apply(arrName, ARRAY_BASIC);
+  }
+  
+  else if (table === STR_REPORT) {
+     const type:number = parseInt(subStr1[subStr1.length - 1]);
+      switch (type) {
+          case 0:
+              arrName.push.apply(arrName, ARRAY_REPORT_0);
+              break;
+          case 1:
+              arrName.push.apply(arrName, ARRAY_REPORT_1);
+              break;
+          case 2:
+              arrName.push.apply(arrName, ARRAY_REPORT_2);
+              break;
+          case 3:
+              arrName.push.apply(arrName, ARRAY_REPORT_3);
+              break;
+          default:
+              break;
+      }
+  }
+
+
+  for (var i = 0; i < subStr1.length; i++) {
+      var subStr2:any = [];
+      if (subStr1[i].indexOf('|') > -1) {
+          subStr2.push.apply(subStr2, subStr1[i].split('|'));
+
+          //2021-03-29 15:57:49 tiepbx
+          // fix bo 2 row EPS* || no dai han || P/E* || EPS điều chỉnh*
+          if (subStr2[0].toLocaleLowerCase() === "EPS*".toLocaleLowerCase() || subStr2[0].toLocaleLowerCase() === "Nợ dài hạn".toLocaleLowerCase() || subStr2[0].toLocaleLowerCase() === "P/E*".toLocaleLowerCase() || subStr2[0].toLocaleLowerCase() === "EPS điều chỉnh*".toLocaleLowerCase()) {
+              continue;
+          }
+
+          // lam tron den hang don vi
+          if (subStr2[0].toLocaleLowerCase() === "EPS(FPTS)**".toLocaleLowerCase()) {
+              subStr2[1] = parseFloat(subStr2[1]).toFixed();
+          }
+
+          subStr2[0] = arrName[i];
+      }
+      else {
+          // co 2 TH: 
+          // +1) cap nhat den quy
+          // +2) loai hinh doanh nghiep: 0, 1, 2,...
+          if (isNaN(Number(subStr1[i]))) {
+              var result = subStr1[i].split(' ');
+              subStr2.push.apply(subStr2, [arrName[i] + ' ' + result[result.length - 1]]);
+          } else {
+              subStr2.push.apply(subStr2, [subStr1[i]]);
+          }
+      }
+      arr.push(subStr2);
+  }
+  return arr;
+}
 // export { g_arrStockInfo };

@@ -12,7 +12,7 @@ import { marketHSXSlice } from "../components/indexMarketWatch/marketHSXSlice";
 import settingMarketWatchSlice from "../components/indexMarketWatch/marketShowSlice";
 import marketHNXSlice from "../components/indexMarketWatch/marketHNXSlice";
 import assetReportSlice from "../components/AssetReport/AssetReportSlice";
-import { dataSlice } from "../components/tableMarketwatch/tableThunk";
+import OrderComanSlice from "../components/tableMarketwatch/orderComanSlice";
 // import {tableBuy} from '../components/tableMarketwatch/tableBuy';
 import changeThemeModeSlice from "../components/header/DarkModeSlice";
 import LayoutMarketWatchSLice from "../components/layoutMarketwatch/LayoutMarketWatchSLice";
@@ -21,11 +21,17 @@ import { dataSliceShow } from "../components/orderFormMarketwatch/data";
 import statusTableMWSlice from "../components/chartMarketwatch/statusTableSlice";
 import chartIndexSlice from "../components/chartIndex/chartIndexSlice";
 import { dataSliceThongke } from "../components/tableMarketwatch/helper/tableFormThongke";
+import RespportSlice from "../pages/Report/ResportSlice";
+import TransferSlice from "../pages/Transfer/TransferSlice";
+import chartOptionSlice from "../components/tablePopupMarketwatch/chartOptionSlice";
+import AuthenCationSlice from "../components/Authencation/AuthencationSlice";
+import dataTablePopupDetail from "../components/tablePopupMarketwatch/dataTablePopupDetailSlice";
 
 export const store = configureStore({
   reducer: {
     //trang chủ marketwatch
     // layout
+    Authen : AuthenCationSlice.reducer,
     layout: LayoutMarketWatchSLice.reducer,
     // Get danh sách công ty để map với stockcode
     company: companySlice.reducer,
@@ -50,12 +56,10 @@ export const store = configureStore({
     //báo cáo tài sản
     assetReport: assetReportSlice.reducer,
     //
-     dataTable: dataSlice.reducer,
-     dataBuy: dataSlice.reducer,
-     
-    dataThongke : dataSliceThongke.reducer,
-    dataMouse: dataSlice.reducer,
-    dataMouseBuy: dataSlice.reducer,
+   
+    dataThongke: dataSliceThongke.reducer,
+    orderComan :  OrderComanSlice.reducer,
+ 
     //set status show table chart
     statusTable: statusTableMWSlice.reducer,
 
@@ -69,6 +73,16 @@ export const store = configureStore({
     dataShow: dataSliceShow.reducer,
     // chart index
     chartIndex: chartIndexSlice.reducer,
+    // chart option
+    chartOption: chartOptionSlice.reducer,
+
+    dataApi: dataSliceShow.reducer,
+    dataApiPendingOder: dataSliceShow.reducer,
+
+    report: RespportSlice.reducer,
+    transfer: TransferSlice.reducer,
+
+    dataPopupDetail: dataTablePopupDetail.reducer,
   },
 });
 export type RootState = ReturnType<typeof store.getState>;

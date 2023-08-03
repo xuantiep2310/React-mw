@@ -23,8 +23,7 @@ import FooterMarket from "../footerMarketwatch/FooterMarket";
 import { statusChartMarketwatch } from "../chartMarketwatch/chartMarketwatchSlice";
 import { useSelector } from "react-redux";
 import { fetchCompanyAsync } from "../companyMarketwatch/companyMarketwatchSlice";
-import { dispatchDataTable } from "./tableThunk";
-import { dispatchDataTableBuy } from "./tableThunk";
+import { dispatchDataTable } from "./orderComanSlice";
 import { getDataTable } from "./tableSlice";
 import { fetchCategoryAsync } from "../menuBarMW/danhmucSlice";
 const showKLPT = (value: string) => {
@@ -127,7 +126,6 @@ const TableMarketWatch = () => {
   };
   const handleClickBuy = (dataTable: any) => {
     console.log("dataTable", dataTable);
-    dispatch(dispatchDataTableBuy(dataTable));
   };
   // sort products
   products.forEach((obj) =>

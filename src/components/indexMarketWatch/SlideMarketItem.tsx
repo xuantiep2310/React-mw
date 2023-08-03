@@ -1,7 +1,8 @@
 import React from "react";
 import { iconColorMenuMarket, setColorMenuMarket } from "../../utils/util";
-import ChartIndex from "../chartIndex/ChartIndex";
-import ChartTest from "../chartIndex/ChartTest";
+// import ChartIndex from "../chartIndex/ChartIndex";
+// import ChartTest from "../chartIndex/ChartIndexSlide";
+import ChartIndexSlide from "../chartIndex/ChartIndexSlide";
 
 type Props = {
   id: string[];
@@ -19,6 +20,7 @@ type Props = {
   valueNoChange: string;
   status: string;
   san: string;
+  dataChartIndex: any;
 };
 
 const SlideMarketItem: React.FC<Props> = ({
@@ -37,14 +39,14 @@ const SlideMarketItem: React.FC<Props> = ({
   valueNoChange,
   status,
   san,
+  dataChartIndex,
 }: Props) => {
-
+  console.log(san)
   return (
-   
     <>
-      <li className="dvChart">
-        <div >
-          <p className="text-sm whitespace-nowrap">
+      <li className="dvChart ">
+        <div>
+          <p className="text-sm text-center whitespace-nowrap">
             <span id="" className="mar_">
               {name}:
             </span>
@@ -64,10 +66,13 @@ const SlideMarketItem: React.FC<Props> = ({
             >
               {valueChange}
             </span>
-            <span id="" className={`${setColorMenuMarket(valueChange)} px-0.5`}>
+            <span
+              id=""
+              className={`${setColorMenuMarket(valueChange)} px-0.5 `}
+            >
               <span
                 id={id[3]}
-                className={`${setColorMenuMarket(valueChange)} px-0.5`}
+                className={`${setColorMenuMarket(valueChange)} px-0.5 `}
               >
                 {valueChangePercent}
               </span>
@@ -93,10 +98,14 @@ const SlideMarketItem: React.FC<Props> = ({
                   {valueUp}
                 </span>
                 <span className="marc txtIndex">
-                  (<span className="marc" id={id[7]}>{valueCeiling}</span>)
+                  (
+                  <span className="marc" id={id[7]}>
+                    {valueCeiling}
+                  </span>
+                  )
                 </span>
                 <span className="square" />
-                <span  id={id[8]} className="marn txtIndex">
+                <span id={id[8]} className="marn txtIndex">
                   {valueNoChange}
                 </span>
                 <span className="arrowDown" />
@@ -104,10 +113,14 @@ const SlideMarketItem: React.FC<Props> = ({
                   {valueDown}
                 </span>
                 <span className="marf txtIndex">
-                  (<span className="marf" id={id[10]}>{valueFloor}</span>)
+                  (
+                  <span className="marf" id={id[10]}>
+                    {valueFloor}
+                  </span>
+                  )
                 </span>
                 <span
-                  className="HO_MarketStat txtIndex"
+                  className={`${san==="HSX" ?"HO_MarketStat":san==="HNX"?"HA_MarketStat":"UPC_MarketStat"} txtIndex`}
                   id={`${id[11] !== undefined ? id[11] : ""}`}
                 >
                   {status}
@@ -116,7 +129,7 @@ const SlideMarketItem: React.FC<Props> = ({
             </>
           )}
           {/* <ChartIndex /> */}
-          <ChartTest name={name} san={san} />
+          <ChartIndexSlide name={name} san={san} dataChartIndex={dataChartIndex} />
         </div>
       </li>
     </>

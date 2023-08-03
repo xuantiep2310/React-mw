@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RootState, useAppDispatch } from "../../store/configureStore";
 import { listStock } from "./codeListSlice";
-import { activeMenuDanhmuc, fetchCategoryAsync } from "./danhmucSlice";
+import { AddCategori, activeMenuDanhmuc, fetchCategoryAsync } from "./danhmucSlice";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { fetchTableHNXAsync, fetchTableHSXAsync, getDataTable, setProductParams } from "../tableMarketwatch/tableSlice";
 import { setActiveMenu } from "./menuSlice";
-import { getDataTable } from "../tableMarketwatch/tableTestSlice";
+import { HandleSetActiveFloor, getDataTable } from "../tableMarketwatch/tableTestSlice";
 // import { fetchDataTableHNXAsync, } from "../tableMarketwatch/tableSlice";
 
 // interface IProp {
@@ -18,6 +18,7 @@ const DanhMuc = (props: any) => {
   const { isLoading, data, status, row, name } = useSelector(
     (state: RootState) => state.categories
   );
+  const [ValueCate ,setInputCate]  = useState("")
 // function handleDispatch(item:string) {
 //   dispatch(fetchTableHNXAsync(item))
 //   dispatch(fetchTableHSXAsync(item))
@@ -26,6 +27,12 @@ const DanhMuc = (props: any) => {
   // Chuyển hướng đến trang chủ
   // navigate('/chung-khoan/danh-muc');
 // }
+
+const HandleAddCate = ()=>{
+  const newData = new FormData()
+  newData.append("menu_private" , ValueCate)
+    dispatch(AddCategori(newData))
+}
 const handleItemChildClick = async (
   name: string,
   query: string,
@@ -46,6 +53,7 @@ const handleItemChildClick = async (
     keyMenu : -1,
     nameMenu : ""
   }
+  dispatch(HandleSetActiveFloor(0))
   dispatch(setActiveMenu(activeMenu)) // cập nhật active menu 
   dispatch(activeMenuDanhmuc(activeCate )) // cập nhật active danh mục 
   await dispatch(getDataTable(data));
@@ -60,7 +68,7 @@ const handleItemChildClick = async (
           <React.Fragment key={index}>
             <li className="relative">
               <Link to="" className=" "  onClick={() => handleItemChildClick(item.Name,item.List ,item.Row ,'danh-muc',)}> 
-                {item.Name}
+                {item.Name} 
               </Link>  
               <span id={`btDel${index}`} className="imgDel keep" />
             </li>
@@ -68,8 +76,8 @@ const handleItemChildClick = async (
         ))}
          
         <li className="relative">
-          <input className="textBox" placeholder="Thêm danh mục"></input>
-          <span id="btAdd" className="imgAdd keep">
+          <input className="textBox" value={ValueCate} placeholder="Thêm danh mục" onChange={(e) => setInputCate(e.target.value)}></input>
+          <span id="btAdd" className="imgAdd keep" onClick={HandleAddCate}>
             <span></span>
           </span>
         </li>

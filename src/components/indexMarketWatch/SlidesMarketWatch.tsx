@@ -1,5 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import Slider from "react-slick";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import "./slide.scss";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -34,16 +39,13 @@ import {
   fStatusMarketHSX,
   fStatusMarketUPCOM,
 } from "../../utils/util";
+import { fetchChartIndexAsync } from "../chartIndex/chartIndexSlice";
 
 const SlidesMarketWatch = () => {
   const { visible } = useAppSelector((state) => state.chart);
   const height = useContext(AppContext);
-  const [isHoveringLeft, setIsHoveringLeft] = useState(false);
-  const [isHoveringRight, setIsHoveringRight] = useState(false);
-  const [sliderRef, setSliderRef] = useState<Slider | null>(null);
   const screenWidth = visible ? window.innerWidth - 650 : window.innerWidth;
-  const slideWidth = 220;
-  const slidesToShow = Math.floor(screenWidth / slideWidth);
+  const { dataChartIndex } = useAppSelector((state) => state.chartIndex);
 
   const dispatch = useAppDispatch();
   const {
@@ -55,7 +57,6 @@ const SlidesMarketWatch = () => {
   const { INDEX } = useAppSelector(
     (state: RootState) => state.settingMarketwatch
   );
-
   useEffect(() => {
     dispatch(fetchHSXMarketAsync());
   }, [dispatch]);
@@ -65,79 +66,81 @@ const SlidesMarketWatch = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    // const currentSlide = sliderRef?.innerSlider
-    // const totalSlides = sliderRef?.current?.slickGetOption('slidesToShow');
-    if (sliderRef && (isHoveringLeft || isHoveringRight)) {
-      if (isHoveringLeft) {
-        sliderRef.slickPrev();
-      }
-      if (isHoveringRight) {
-        sliderRef.slickNext();
-      }
-      // thời gian delay giữa các lần chuyển slide
+    dispatch(fetchChartIndexAsync());
+  }, [dispatch]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // let speed = 0;
+  const scrollRef = useRef<any>(null);
+  const divRef = useRef<any>(null);
+  let scrollInterval: any = null;
+  let scrollInterval1: any = null;
+  // const [mouseX, setMouseX] = useState(0);
+  const handleMouseDown = (event: any) => {
+    setIsDragging(true);
+    setStartX(event.pageX - divRef.current.offsetLeft);
+    setScrollLeft(divRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (event: any) => {
+    if (!isDragging) return;
+    event.preventDefault();
+    const x = event.pageX - divRef.current.offsetLeft;
+    const walk = x - startX; // Tốc độ kéo
+    divRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  let speed = 0; // Biến lưu trữ giá trị speed
+
+  let handleMouseEnter = (value: any, event: any, speed: any) => {
+    if (value === "right") {
+      !visible && event.target.classList.add("scrollingHotSpotRightVisible");
+
+      scrollInterval = setInterval(() => {
+        divRef.current.scrollLeft += speed; // tốc độc scroll
+        const divElement = divRef.current;
+        const isAtRightEdge =
+          divElement.scrollLeft + divElement.clientWidth >=
+          divElement.scrollWidth;
+
+        if (isAtRightEdge) {
+          !visible &&
+            event.target.classList.remove("scrollingHotSpotRightVisible");
+          clearInterval(scrollInterval);
+          handleMouseEnter(null, null, 0);
+        }
+      }, 1);
     }
-  }, [isHoveringLeft, isHoveringRight, sliderRef]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleHoverRight = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsHoveringRight(true);
-    !visible && e.currentTarget.classList.add("scrollingHotSpotRightVisible");
+    if (value === "left") {
+      !visible && event.target.classList.add("scrollingHotSpotLeftVisible");
+      scrollInterval = setInterval(() => {
+        divRef.current.scrollLeft -= speed; // tốc độc scroll
+        if (divRef.current.scrollLeft === 0) {
+          clearInterval(scrollInterval);
+          event.target.classList.remove("scrollingHotSpotLeftVisible");
+          handleMouseEnter(null, null, 0);
+        }
+      }, 8);
+    }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleLeaveRight = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsHoveringRight(false);
-    !visible &&
-      e.currentTarget.classList.remove("scrollingHotSpotRightVisible");
+  const handleMouseMoveButton = (event: any) => {
+    // handleMouseEnter("right", event, 0);
+    speed = event.clientX - event.target.getBoundingClientRect().left;
+    console.log(speed);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleHoverLeft = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsHoveringLeft(true);
-    !visible && e.currentTarget.classList.add("scrollingHotSpotLeftVisible");
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleLeaveLeft = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsHoveringLeft(false);
-    !visible && e.currentTarget.classList.remove("scrollingHotSpotLeftVisible");
-  };
-  //kéo sang phải và sang trái liên tục
-  const handleHover = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      handleHoverLeft(e);
-      handleHoverRight(e);
-    },
-    [handleHoverLeft, handleHoverRight]
-  );
-
-  const handleLeave = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      handleLeaveLeft(e);
-      handleLeaveRight(e);
-    },
-    [handleLeaveLeft, handleLeaveRight]
-  );
-
-  const settings = {
-    // className: "center",
-    // centerMode: true,
-    dots: false,
-    speed: visible ? 300 : 4000,
-    // infinite: true,
-    slidesToShow: slidesToShow,
-    slidesToScroll: slidesToShow,
-    // slidesToShow: 7, // Hiển thị 3 slide trên một lần trượt
-    // slidesToScroll: 7,
-    autoplay: isHoveringLeft || isHoveringRight,
-    autoplaySpeed: 4000,
-    cssEase: "linear",
-    centerPadding: "50px",
-    draggable: true,
-    swipeToSlide: true,
-    infinite: false,
-    onMouseEnter: handleHover,
-    onMouseLeave: handleLeave,
+  const handleMouseLeave = (e: any) => {
+    clearInterval(scrollInterval); // Dừng cuộn tự động khi bỏ hover    
+    !visible && e.target.classList.remove("scrollingHotSpotRightVisible");
+    !visible && e.target.classList.remove("scrollingHotSpotLeftVisible");
   };
 
   return (
@@ -153,14 +156,21 @@ const SlidesMarketWatch = () => {
     >
       <div
         className={`scrollingHotSpotLeft ${visible ? "!h-full" : ""}`}
-        onMouseEnter={handleHoverLeft}
-        onMouseLeave={handleLeaveLeft}
+        onMouseEnter={(e) => {
+          handleMouseEnter("left", e, 2);
+        }}
+        onMouseLeave={(e: any) => {
+          handleMouseLeave(e);
+        }}
       />
       <ul className="my-1 col-priceboard class-chart">
-        <Slider
-          {...(settings as any)}
-          className="custom-carousel my-slider"
-          ref={(slider) => setSliderRef(slider)}
+        <div
+          className="flex w-full overflow-x-hidden whitespace-nowrap cursor-grab"
+          ref={divRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           {INDEX.VNXALL && (
             <SlideMarketItem
@@ -179,6 +189,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VNXALL_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VNI && (
@@ -198,6 +209,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VNI_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VN30 && (
@@ -217,6 +229,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VN30_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VN100 && (
@@ -236,6 +249,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VN100_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VNALL && (
@@ -255,6 +269,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VNALL_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VNMID && (
@@ -274,6 +289,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VNMID_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.VNSML && (
@@ -293,6 +309,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHSX?.VNSML_Floor}
               status={fStatusMarketHSX(valueHSX?.STAT_ControlCode)}
               san="HSX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNX && (
@@ -312,6 +329,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i02_x253f}
               status={fStatusMarketHNX(valueHNX?.i02_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNX30 && (
@@ -331,6 +349,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i41_x253f}
               status={fStatusMarketHNX(valueHNX?.i41_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNXLCAP && (
@@ -350,6 +369,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i26_x253f}
               status={fStatusMarketHNX(valueHNX?.i26_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNXSMCAP && (
@@ -369,6 +389,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i28_x253f}
               status={fStatusMarketHNX(valueHNX?.i28_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNXFIN && (
@@ -388,6 +409,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i39_x253f}
               status={fStatusMarketHNX(valueHNX?.i39_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNXMAN && (
@@ -407,6 +429,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i310_x253f}
               status={fStatusMarketHNX(valueHNX?.i310_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.HNXCON && (
@@ -426,6 +449,7 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i311_x253f}
               status={fStatusMarketHNX(valueHNX?.i311_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
           {INDEX.UPCOM && (
@@ -445,17 +469,26 @@ const SlidesMarketWatch = () => {
               valueFloor={valueHNX?.i03_x253f}
               status={fStatusMarketUPCOM(valueHNX?.i03_x336x340)}
               san="HNX"
+              dataChartIndex={dataChartIndex}
             />
           )}
-        </Slider>
+        </div>
       </ul>
       <div
         className={`scrollingHotSpotRight ${visible ? "!h-full" : ""}`}
-        onMouseEnter={handleHoverRight}
-        onMouseLeave={handleLeaveRight}
+        onMouseEnter={(e) => {
+          handleMouseEnter("right", e, 2);
+        }}
+        onMouseOut={(e: any) => {
+          handleMouseLeave(e);
+        }}
+        onMouseMove={(e) => {
+          handleMouseMoveButton(e);
+        }}
+        ref={scrollRef}
       />
     </div>
   );
 };
 
-export default SlidesMarketWatch;
+export default React.memo(SlidesMarketWatch);

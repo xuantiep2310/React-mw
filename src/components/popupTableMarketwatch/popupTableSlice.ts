@@ -2,27 +2,29 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 
 interface ComponentState {
-    visible: boolean;
+    visible?: boolean;
     code: string;
+    floorLTG: string;
 }
 
 const initialState: ComponentState = {
   visible: false,
   code: '',
+  floorLTG: ""
 };
-const popupTableSlice = createSlice({
+const   popupTableSlice = createSlice({
     name: 'DetailStock',
     initialState,
     reducers: {
-        showDetailStock: (state, action: PayloadAction<string>) => {
-            state.visible = !state.visible;
-            state.code = action.payload;
-            // console.log( action.payload)
+        showDetailStock: (state, action) => {
+            state.visible = action.payload.visible;
+            state.code = action.payload.code;
           },
-   
+          setLLTG : (state,action) => {
+            state.floorLTG = action.payload
+          }
     },
-    
 });
 
-export const { showDetailStock} = popupTableSlice.actions;
+export const { showDetailStock ,setLLTG} = popupTableSlice.actions;
 export default popupTableSlice;

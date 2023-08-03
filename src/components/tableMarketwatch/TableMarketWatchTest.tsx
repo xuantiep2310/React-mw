@@ -1,20 +1,23 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 // import "ag-grid-enterprise";
 // import "ag-grid-community/styles/ag-grid.css";
 // import "ag-grid-community/styles/ag-theme-alpine.css";
 import "./table.scss";
-import { arrayColor, colorTextMenu, fStatusMarketHNX, fStatusMarketUPCOM, formatNumberMarket } from "../../utils/util";
+import { arrayColor, colorTextMenu, fStatusMarketHNX, fStatusMarketHSX, fStatusMarketUPCOM, formatNumberMarket } from "../../utils/util";
 
 // import { LicenseManager } from "ag-grid-enterprise";
 import { useAppDispatch, useAppSelector } from "../../store/configureStore";
-import { getDataTable, handleHistoryPrices } from "./tableTestSlice";
+import { getDataCookie, getDataTable, handleHistoryPrices } from "./tableTestSlice";
 import { fetchCategoryAsync } from "../menuBarMW/danhmucSlice";
 
 import { defaultColDef, gridOptions } from "./interface/config.tablegrid";
 import ColumnDef from "./components/options";
 import { setCookie } from "../../models/cookie";
 import { g_CLASS_INDEX } from "../../configs/app.config";
+import { async } from "q";
+import { setActiveMenu } from "../menuBarMW/menuSlice";
+import { fetchCompanyAsync } from "../companyMarketwatch/companyMarketwatchSlice";
 
 // LicenseManager.setLicenseKey(
 //   "SHI_UK_on_behalf_of_Lenovo_Sweden_MultiApp_1Devs6_November_2019__MTU3Mjk5ODQwMDAwMA==e27a8fba6b8b1b40e95ee08e9e0db2cb"
@@ -26,49 +29,64 @@ const TableMarketWatchTest = () => {
 
   const [columnDefs] = ColumnDef(gridRef, pinnedRowsRef);
   const dispatch = useAppDispatch();
-
+  // rest sort 
   //setRowData
-  const {ListDataTable ,DataPined ,RowPined ,keyActiveMan} = useAppSelector((state) => state.tableTest );
+  const { ListDataTable, DataPined, RowPined, keyActiveMan } = useAppSelector((state) => state.tableTest);
   // pinned
-  const pinned = useAppSelector((state) => state.categories.row);
   // call data 
-  const HanDelCate  = useCallback( async ()=>{
+  const HanDelCate = useCallback(async () => {
     let result = await dispatch(fetchCategoryAsync());
     if (result?.payload?.Data[0]?.List) {
       let data = {
         Floor: "danh-muc",
         Query: result?.payload?.Data[0]?.List,
-        RowPined : result?.payload?.Data[0]?.Row,
+        RowPined: result?.payload?.Data[0]?.Row,
       };
+    
       await handelGetData(data);
     } else {
       let data = {
         Floor: "HSX",
         Query: "s=quote&l=All",
-        RowPined : null,
-        KeyMenuChildren : null
+        RowPined: null,
+        KeyMenuChildren: null
       };
-      let newCookie={
+      let newCookie = {
         tab: "VNI",
         codeList: ""
       }
       localStorage.setItem("activePriceboardTabMenu", "VNI");
       setCookie(newCookie)
       await handelGetData(data);
+      let activeMenu = {
+        nameMenu: "VNI",
+        keyMenu: 0,
+        floor : "HSX"
+      };
+
+      dispatch(setActiveMenu(activeMenu))
     }
-   } , [dispatch])
+  }, [dispatch])
   const handelGetData = useCallback(
-    (Data: any) => {
-      dispatch(getDataTable(Data));
+   async (Data: any) => {
+     let result = await dispatch(getDataTable(Data));
+     if(result?.payload){
+      dispatch(getDataCookie(""));
+     }
+    //  console.log("vô đây result: " + result?.payload)
     },
     [dispatch]
   );
- 
+  const HanDleConpany = useCallback(async() =>{
+      await  dispatch(fetchCompanyAsync())
+  },[])
+
   useEffect(() => {
-    if(keyActiveMan === 0){
+    if (keyActiveMan === 0) {
       HanDelCate();
     }
-  }, [dispatch,HanDelCate]);
+    HanDleConpany()
+  }, [dispatch, HanDelCate]);
   useEffect(() => {
     const socketHSX = new WebSocket(
       "wss://eztrade.fpts.com.vn/hnx/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=l4Qv5el2qo7nNiXubQ1oHGbFB%2F4w1UNE4vpgPXPs5nz6VP7b6bGYnMwB2aivGfMOUNZ%2F0QwrXmR%2BwkqRkEukXGYDdn8iKHzVZ%2BIiwFO2A1nxyh0%2FCdX3rc3omFIBjraz&connectionData=%5B%7B%22name%22%3A%22hubhnx2%22%7D%5D&tid=5"
@@ -77,7 +95,7 @@ const TableMarketWatchTest = () => {
       "wss://eztrade.fpts.com.vn/hsx/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=JWiUHUXRVLCXtTY7Na0DSx2vODWGuDSFrc6Da7FVAcRg9EYCUqCkDYfa3bsaKn305erm6aBpsrUmoFZ70viczLA1hDqUzrrqmuaZWu0UZDyUzynPYy0gGJu4gHM7dZVg&connectionData=%5B%7B%22name%22%3A%22hubhsx2%22%7D%5D&tid=1"
     );
     socketHSX.onopen = () => {
-      //console.log("WebSocket connection established.");
+      // console.log("WebSocket connection established.");
     };
     socketHNX.onopen = () => {
       //console.log("WebSocket connection established.");
@@ -87,7 +105,7 @@ const TableMarketWatchTest = () => {
       // console.log(gridOptions.api)
       // gridOptions.api.setRowData(event.data);
     };
-  
+
     socketHNX.onmessage = (event) => {
       // updateQuote(event.data)
       updateQuote(event.data);
@@ -103,7 +121,7 @@ const TableMarketWatchTest = () => {
       socketHSX.close();
       socketHNX.close();
     };
-    
+
   }, []);
   // useEffect(() => {
   //   const socketHNX = new WebSocket(
@@ -153,9 +171,9 @@ const TableMarketWatchTest = () => {
   };
   const updateTableHNX = (dataHNX: any) => {
     var vTextClass = "",
-    vImageClass = "",
-    vName = "",
-    vStrs = "";
+      vImageClass = "",
+      vName = "",
+      vStrs = "";
     const arrRowID = dataHNX.RowID;
     const arrInfo = dataHNX.Info;
     if (dataHNX) {
@@ -218,7 +236,7 @@ const TableMarketWatchTest = () => {
             if (vCLassIndex) {
               if (vTextClass) {
                 vCLassIndex.className = vTextClass + " px-0.5";
-           
+
                 // console.log(vCLassIndex,vTextClass)
                 //vCLassIndex.classList.add(vTextClass);
               }
@@ -230,10 +248,10 @@ const TableMarketWatchTest = () => {
                 //vCLassIndex.classList.add(vTextClass);
               }
             }
-        
+
           }
           //hsx
-          if(vStrs[1]==="ChangePercent"){
+          if (vStrs[1] === "ChangePercent") {
             var v = parseFloat(dataHNX[1]);
             if (v === 0) {
               // = tham chieu, vang
@@ -251,10 +269,10 @@ const TableMarketWatchTest = () => {
               vTextClass = g_CLASS_INDEX[2][0];
               vImageClass = g_CLASS_INDEX[2][1];
             }
-            if(vCLassIndexHSX){
+            if (vCLassIndexHSX) {
               if (vTextClass) {
                 vCLassIndexHSX.className = vTextClass + " px-0.5";
-           
+
                 // console.log(vCLassIndex,vTextClass)
                 //vCLassIndex.classList.add(vTextClass);
               }
@@ -277,7 +295,7 @@ const TableMarketWatchTest = () => {
           if (fStatusMarketHNX(dataHNX[1]) !== "") {
             tdIndexMenu.innerHTML = fStatusMarketHNX(dataHNX[1]);
             tdIndexMenu.style.backgroundColor = "#888888";
-            arrayColor.map((arrayColorText: string) => {
+            arrayColor.forEach((arrayColorText: string) => {
               tdIndexMenu.classList.remove(arrayColorText);
             });
             setTimeout(function () {
@@ -288,16 +306,28 @@ const TableMarketWatchTest = () => {
           else if (fStatusMarketUPCOM(dataHNX[1]) !== "") {
             tdIndexMenu.innerHTML = fStatusMarketUPCOM(dataHNX[1]);
             tdIndexMenu.style.backgroundColor = "#888888";
-            arrayColor.map((arrayColorText: string) => {
+            arrayColor.forEach((arrayColorText: string) => {
               tdIndexMenu.classList.remove(arrayColorText);
             });
             setTimeout(function () {
               tdIndexMenu.style.backgroundColor = "";
             }, 500);
-          } else {
+          }
+             // check thị trường HSX
+             else if (fStatusMarketHSX(dataHNX[1]) !== "") {
+              tdIndexMenu.innerHTML = fStatusMarketHSX(dataHNX[1]);
+              tdIndexMenu.style.backgroundColor = "#888888";
+              arrayColor.forEach((arrayColorText: string) => {
+                tdIndexMenu.classList.remove(arrayColorText);
+              });
+              setTimeout(function () {
+                tdIndexMenu.style.backgroundColor = "";
+              }, 500);
+            }           
+        else {
             tdIndexMenu.innerHTML = `${dataHNX[1]}`;
             tdIndexMenu.style.backgroundColor = "#888888";
-            arrayColor.map((arrayColorText: string) => {
+            arrayColor.forEach((arrayColorText: string) => {
               tdIndexMenu.classList.remove(arrayColorText);
             });
             //tdIndexMenu.style.color = colorTextMenu(dataHNX[1])
@@ -328,32 +358,36 @@ const TableMarketWatchTest = () => {
     if (valueTCS) {
       valueTCS.textContent = `${formatNumberMarket(arrValue)}`;
       // gán màu bg
+      const test1  = valueTCS;
       const test = valueTCS.parentElement;
       if (test) {
+        test1.style.backgroundColor = "#888888"
         test.style.backgroundColor = "#888888";
         setTimeout(function () {
           test.style.backgroundColor = "";
+          test1.style.backgroundColor = "";
         }, 500);
       }
       // sau 0.5s xóa màu bg
     }
   };
   const containerStyle = { width: "100%", height: "100%" };
-const gridStyle = { height: "100%", width: "100%" };
-  const HandleHistory= ()=>{
-      dispatch(handleHistoryPrices("tets"))
+  const gridStyle = { height: "100%", width: "100%" };
+  const HandleHistory = () => {
+    dispatch(handleHistoryPrices("tets"))
   }
   useEffect(() => {
     document.addEventListener("contextmenu", (event) => {
       event.preventDefault();
     });
     return () => {
-      document.removeEventListener("contextmenu", () => {});
+      document.removeEventListener("contextmenu", () => { });
     };
   }, []);
-  const a = [{TC: "hello "}]
+  //  ******************************************************************
   return (
     <div style={containerStyle}>
+
       <div style={gridStyle} className="ag-theme-alpine-dark table__price">
         <AgGridReact
           ref={gridRef}
@@ -383,7 +417,7 @@ const gridStyle = { height: "100%", width: "100%" };
           }}
         />
       </div>
-    
+
     </div>
   );
 };

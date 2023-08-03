@@ -5,13 +5,16 @@ import { RootState, useAppDispatch } from "../../store/configureStore";
 // import { getDataTable , } from "../tableMarketwatch/tableSlice";
 import {
   HandleKeyActiveMain,
+  HandleSetActiveFloor,
   getDataCookie,
   getDataTable,
+  handleSetStockCode,
 } from "../tableMarketwatch/tableTestSlice";
 import { useSelector } from "react-redux";
 import { activeMenuDanhmuc, historyPriceActiveMenu } from "./danhmucSlice";
 import { setActiveMenu } from "./menuSlice";
 import { setCookie } from "../../models/cookie";
+import { string } from "yargs";
 
 interface MenuItem {
   name: string;
@@ -22,21 +25,15 @@ interface MenuItem {
 }
 
 const MenuBar = () => {
+  document.title ="EzTrade"
   const dispatch = useAppDispatch();
-  const [activeMenuItemName, setActiveMenuItemChild] = useState<string | null>(
-    null
-  ); // teen menu item
-  const { row, name, data } = useSelector(
-    (state: RootState) => state.categories
-  );
   const { keyMenu, nameMenu } = useSelector(
     (state: RootState) => state.menuBar
   );
+  const { row, name, data } = useSelector(
+    (state: RootState) => state.categories
+  );
   const handleItemClick = (path: string, key: number) => {
-    // setIsActiveMenu(key);
-    // setactiveNameFloor(path);
-    // localStorage.setItem("activePriceboarFloor", path);
-    // click set lại active menu
     let activeCate = {
       row: null,
       name: "",
@@ -51,7 +48,6 @@ const MenuBar = () => {
     floor: string,
     KeyMenuChildren?: any
   ) => {
-    setActiveMenuItemChild(name);
     localStorage.setItem("activePriceboardTabMenu", name);
     let data = {
       Floor: floor,
@@ -62,6 +58,7 @@ const MenuBar = () => {
     let activeMenu = {
       nameMenu: name,
       keyMenu: key,
+      floor : floor
     };
     let cookie = {
       tab: name,
@@ -72,9 +69,17 @@ const MenuBar = () => {
     dispatch(setActiveMenu(activeMenu)); // cập nhật lại menu
     dispatch(historyPriceActiveMenu())// cập lại menu category
     dispatch(HandleKeyActiveMain()) // check  call menu category
+    dispatch(handleSetStockCode()) // reset lại stock code table giá 
     let result = await dispatch(getDataTable(data));
     if (result?.payload) {
       dispatch(getDataCookie(cookie.codeList)); // cập nhật lại menu
+    }
+    if(name == "Giao dịch thỏa thuận"){
+      dispatch(HandleSetActiveFloor(1))
+    }else if(key == 4 ){
+      dispatch(HandleSetActiveFloor(2))
+    }else{
+      dispatch(HandleSetActiveFloor(0))
     }
   };
   const renderMenuItem = (item: any, key: number) => {
@@ -82,7 +87,7 @@ const MenuBar = () => {
       <div
         key={key}
         className={`group list-sub-menu ${
-          !row && !name && keyMenu === key ? "active" : ""
+        !row && !name && keyMenu === key ? "active" : ""
         } `}
         onClick={() => handleItemClick(item.path, key)}
       >
@@ -120,7 +125,7 @@ const MenuBar = () => {
                   <Link
                     to=""
                     className={`${
-                      activeMenuItemName === child.name ? "active" : ""
+                      nameMenu === child.name ? "active" : ""
                     } `}
                   >
                     {child.name}
@@ -155,10 +160,10 @@ const MenuBar = () => {
                     <Link
                       to=""
                       className={`${
-                        activeMenuItemName === child.name ? "active" : ""
+                        nameMenu === child.name ? "active" : ""
                       } `}
                     >
-                      {child.name}
+                      {child.name} 
                     </Link>
                   </li>
                 );

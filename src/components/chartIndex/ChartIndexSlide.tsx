@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import { formatNumber } from "../../utils/util";
-import { useAppDispatch, useAppSelector } from "../../store/configureStore";
-import { fetchChartIndexAsync } from "./chartIndexSlice";
 import "./chartIndex.scss";
+import { _getDateTs } from "./util/app.chart";
 
 type TProps = {
   name: string;
   san: string;
+  dataChartIndex: any;
 };
-const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
-  const dispatch = useAppDispatch();
-  const { dataChartIndex } = useAppSelector((state) => state.chartIndex);
+const ChartIndexSlide: React.FC<TProps> = ({ name, san, dataChartIndex }: TProps) => {
   const [dataSpline, setDataSpline] = useState([]);
   const [dataBar, setDataBar] = useState([]);
   const [indexValue, setIndexValue] = useState(0);
   const [timeFirst, setTimeFirst] = useState(0);
   const [timeLast, setTimeLast] = useState<any>();
-
-  useEffect(() => {
-    dispatch(fetchChartIndexAsync());
-  }, [dispatch]);
 
   useEffect(() => {
     if (san === "HSX") {
@@ -107,7 +101,7 @@ const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
         setDataBar(dataTimeVol);
       }
     }
-  }, [dataChartIndex.HNX, dataChartIndex.HSX, name, san, timeFirst]);
+  }, [dataChartIndex?.HNX, dataChartIndex?.HSX, name, san, timeFirst]);
 
   useEffect(() => {
     const gradient: any = [0, 0, 50, 380];
@@ -168,7 +162,30 @@ const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
         backgroundColor: "#000",
         width: 205,
         height: 98,
+        events: {
+          load: function (e: any) {
+            const xAxis = this.xAxis[0];
+            const today = new Date();
+            const dd = today.getDate();
+            const mm = today.getMonth(); //January is 0!
+            const yyyy = today.getFullYear();
+            const HH1 = 9;
+            const HH2 = 15;
+            const MM = 0; // minute
+
+            const xminTmp = new Date(yyyy, mm, dd, HH1, MM);
+            const xmaxTmp = new Date(yyyy, mm, dd, HH2, MM);
+
+            const xmin = _getDateTs(xminTmp);
+            const xmax = _getDateTs(xmaxTmp);
+            xAxis.setExtremes(xmin, xmax, true, false);
+            // console.log(this.yAxis[1].series);
+    
+          
+          },
+        },
       },
+    
       title: {
         text: "",
       },
@@ -187,8 +204,8 @@ const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
         tickWidth: 0,
         minPadding: 0,
         maxPadding: 0,
-        min: timeFirst, // Giới hạn trục x từ 9 giờ
-        max: timeLast,
+        // min: timeFirst, // Giới hạn trục x từ 9 giờ
+        // max: timeLast,
         tickInterval: 3600000,
         // height: 75,
         labels: {
@@ -273,7 +290,7 @@ const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
         backgroundColor: "#ffffffc9",
         borderColor: "#07d800",
         borderRadius: 5,
-        borderWidth: "1px",
+        borderWidth: 1,
         padding: 6,
         useHTML: true,
         style: {
@@ -336,16 +353,16 @@ const ChartTest: React.FC<TProps> = ({ name, san }: TProps) => {
       },
       series: series,
     });
-    return () => {
-      // chart.destroy();
-    };
   }, [dataBar, dataSpline, indexValue, name, timeFirst, timeLast]);
 
   return (
-    <figure className="highcharts-figure">
-      <div id={`container-${name}`}></div>
-    </figure>
+    <div className="chart__slide__market">
+      <figure className="highcharts-figure">
+        <div id={`container-${name}`}></div>
+      </figure>
+    </div>
   );
 };
 
-export default React.memo(ChartTest);
+export default React.memo(ChartIndexSlide);
+

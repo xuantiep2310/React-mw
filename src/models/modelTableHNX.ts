@@ -1,7 +1,7 @@
 export interface DataTable {
   RowID?: string;
   Info?: Array<Array<string>>;
-  MCK : any
+  MCK?: any;
 }
 export interface ProductParams {
   value: string;
@@ -35,17 +35,6 @@ export interface ProductParamsHNX {
   NNBan: string;
   RoomCL: string;
 }
-// export interface IAddress {
-//   street: string;
-// }
-
-// export interface IUser {
-//   id: number;
-//   name: string;
-//   username: string;
-//   address: IAddress;
-// }
-
 export interface DataGDTT {
   f8: string;
   f9: string;

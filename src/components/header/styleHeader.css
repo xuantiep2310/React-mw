@@ -1,5 +1,18 @@
-
-
+#activeMenuHeader{
+    color: #0055ba !important;
+    border-bottom: 2px solid #0055ba;
+    padding-bottom: 6px;
+}
+.activeMenuHeader >a{
+    color: #0055ba !important;
+    border-bottom: 2px solid #0055ba;
+    padding-bottom: 6px;
+}
+.testAcvie>a{
+    color: #0055ba !important;
+    border-bottom: 2px solid #0055ba;
+    padding-bottom: 6px;
+}
 .border-bottom-menu:after {
     content: "";
     height: 1px;
@@ -80,17 +93,16 @@
 
 input[type=text], txtSymbol {
     outline: none;
-    
     border: 1px solid #DDDDDD;
   }
-  input[type=text]:focus, txtSymbol:focus {
-    /* box-shadow:0 0 5px rgba(81, 203, 238, 1);
-    border: 1px solid rgba(81, 203, 238, 1);
-    border-color: rgb(102, 175, 233); */
+  /* input[type=text]:focus, txtSymbol:focus {
     border-color: #66afe9;
     outline: 0;
     -webkit-box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%), 0 0 8px rgb(102 175 233 / 60%);
     box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%), 0 0 8px rgb(102 175 233 / 60%);
+  } */
+#txtF1{
+    box-shadow :none
   }
 .container-spinner {
     position: relative;

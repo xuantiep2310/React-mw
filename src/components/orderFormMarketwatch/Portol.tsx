@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
 import ReactDOM from 'react-dom';
-import { useAppDispatch, useAppSelector } from "../../store/configureStore";
+import { RootState, useAppDispatch, useAppSelector } from "../../store/configureStore";
 import { dispatchData } from './data';
+import { formatNumber } from '../../utils/util';
+import { Company } from '../../models/root';
+import { setDataOrder } from '../tableMarketwatch/orderComanSlice';
 
 
-export default function Protal({ popup = false, handelClosed = () => { } }) {
-     const data = [
+const  Protal = ({ popup = false, handelClosed = () => { } }) =>  {
+     const data = [ 
         ["058C222210", "BCC", "30", "HNX.LISTED", "1000000000"],
         ["058C222210", "BVS", "30", "HNX.LISTED", "1000000000"],
         ["058C222210", "DHT", "30", "HNX.LISTED", "1000000000"], [
@@ -113,6 +116,7 @@ export default function Protal({ popup = false, handelClosed = () => { } }) {
     const [dataCheckSan, setDataCheckSan] = useState("");
     const [filteredData, setFilteredData] = useState([]);
     const [dataKiquy, setDataKiquy] = useState([])
+    const {dataCompanyTotal} = useAppSelector((state:RootState)=>  state.company)
    
 
     const mappedData: any = data.map((item) => {
@@ -126,8 +130,21 @@ export default function Protal({ popup = false, handelClosed = () => { } }) {
     }, []);
     const dispatch = useAppDispatch();
     const handleShow = (dataShow: any) => {
+        let  data = dataCompanyTotal.find((item :Company) =>  item.Code ===  dataShow.ma)
+        // dataShow = {ma: 'ANV', San: 'HSX', TLV: '30', giaTranSm: '60000'}
         dispatch(dispatchData(dataShow));
         handelClosed()
+        let san = data?.Exchange == 1 ? "HSX" :"HNX"
+      
+        if(data){
+            let dataOrder  = {
+                key  : "M",
+                dataOrder : {...data,Exchange  : san}
+            }
+          
+            dispatch(setDataOrder(dataOrder))
+        }
+        
     };
 
     if (typeof document === "undefined") return <div className='model'></div>
@@ -157,7 +174,7 @@ export default function Protal({ popup = false, handelClosed = () => { } }) {
     }, [dataCheckSan])
     return ReactDOM.createPortal(
         <div className={`model fixed inset-0 z-50 flex items-center justify-center p-5 ${popup ? "" : "invisible opacity-0"}`} >
-            <div onClick={handelClosed} className="absolute inset-0 bg-black overlay bg-opacity-40"  >
+            <div style={{backgroundColor: "rgba(0,0,0,0.6)"}} onClick={handelClosed} className="absolute  inset-0  overlay"  >
             </div>
 
             {/*  */}
@@ -196,8 +213,8 @@ export default function Protal({ popup = false, handelClosed = () => { } }) {
                                                     <td style={{ border: "1px solid #ccc" }} className='text-center !font-bold'>{items.values[0]}</td>
                                                     <td style={{ border: "1px solid #ccc" }} className='text-center'>{items.values[2]}</td>
                                                     <td style={{ border: "1px solid #ccc" }} className='pr-2 text-right'>{items.values[1]}</td>
-                                                    <td onClick={() => handleShow({ ma: items.values[0], San: items.values[2], TLV: items.values[1] })} style={{ border: "1px solid #ccc" }} className='text-center text-[#337ab7] cursor-pointer hover:underline'>chọn</td>
-                                                    <td style={{ border: "1px solid #ccc", backgroundColor: items.values && items.values.length > 0 ? "" : "#ECECEC" }} className='text-center'>{items.values[3]}</td>
+                                                    <td onClick={() => handleShow({ ma: items.values[0], San: items.values[2], TLV: items.values[1] ,giaTranSm:items.values[3] })} style={{ border: "1px solid #ccc" }} className='text-center text-[#337ab7] cursor-pointer hover:underline'>chọn</td>
+                                                    <td style={{ border: "1px solid #ccc", backgroundColor: items.values && items.values.length > 0 ? "" : "#ECECEC" }} className='text-center'> {formatNumber(items.values[3])} </td>
                                                 </tr>
                                             );
                                         })}
@@ -227,3 +244,4 @@ export default function Protal({ popup = false, handelClosed = () => { } }) {
     );
 
 }
+export default  React.memo(Protal)

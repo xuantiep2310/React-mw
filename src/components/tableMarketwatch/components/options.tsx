@@ -4,13 +4,15 @@ import { RowDataIndex } from "../interface/config.tablegrid";
 import { Tooltip } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../../store/configureStore";
 // import { dispatchDataTableBuy } from "../tableBuy";
-import { dispatchDataMouseEventHandler, dispatchDataMouseEventHandlerBuy, dispatchDataTable , dispatchDataTableBuy } from "../tableThunk";
+import {  dispatchDataTable, setDataOrder  } from "../orderComanSlice";
 import { statusChartMarketwatch } from "../../chartMarketwatch/chartMarketwatchSlice";
 import { RowData } from "../../../models/tableMarketwatch";
 import { CellRender } from "./CellRenderComponent";
 import { addDatatPined } from "../tableTestSlice";
 import { setCookie } from "../../../models/cookie";
 import CustomHeader from "../CustomHeader";
+import { CellOtherColorRender } from "./CellOtherColorComponent";
+import { Company } from "../../../models/root";
 
 
 
@@ -40,38 +42,21 @@ const ColumnDef = (props: any, props2: any) => {
   const dispatch = useAppDispatch();
   const { INDEX } = useAppSelector((state) => state.settingMarketwatch);
   const {RowPined} = useAppSelector((state) => state.tableTest)
+  const {dataCompanyTotal} = useAppSelector((state) => state.company)
   const handleClick = (dataTable: any) => {
-    // console.log("dataTable ii",dataTable)
+
     dispatch(dispatchDataTable(dataTable));
-  };
-  const handleClickR = (dataTableR: any) => {
-    dispatch(dispatchDataTable(dataTableR));
-  };
-  const handleClickRight = (dataTableMou: any): React.MouseEventHandler<HTMLDivElement> => {
-  return (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    handleClickR(dataTableMou);
-    dispatch(dispatchDataMouseEventHandler(dataTableMou));
-
-  };
-  };
-    const handleClickBuyR = (dataTable: any) => {
-    // console.log("dataTable",dataTable)
-    dispatch(dispatchDataTableBuy(dataTable));
+    const dataCode = dataCompanyTotal.find((item:Company) =>  item.Code ===  dataTable.ma)
+    if(dataCode){
+      let san = dataCode?.Exchange === 1 ?  "HSX" :"HNX"
+      const data = {
+        key  :"B",
+        dataOrder :{...dataCode , Exchange :san}
+      }
+      dispatch(setDataOrder(data))
+    }
   };
 
-  const handleClickBuy = (dataTable: any) => {
-    // console.log("dataTable",dataTable)
-    dispatch(dispatchDataTableBuy(dataTable));
-  };
-    const handleClickRightBuy = (dataTableBUYR: any): React.MouseEventHandler<HTMLDivElement> => {
-  return (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    handleClickBuyR(dataTableBUYR);
-    dispatch(dispatchDataMouseEventHandlerBuy(dataTableBUYR));
-
-  };
-};
 
   const handleDoubleClick = (e: any, val: any) => {
     if (e.detail === 2) {
@@ -155,12 +140,12 @@ const ColumnDef = (props: any, props2: any) => {
               }}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {}}
             />
-            <span
+            <div
               className="pt-1 pl-1"
               onDoubleClick={(e) => handleDoubleClick(e, value)}
             >
               {value}
-            </span>
+            </div>
           </div>
         );
       },
@@ -183,7 +168,7 @@ const ColumnDef = (props: any, props2: any) => {
         fontWeight: "",
         color: setColorMarkettest("", params),
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "Tran",
@@ -199,7 +184,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "San",
@@ -215,7 +200,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       headerName: "Mua",
@@ -261,9 +246,11 @@ const ColumnDef = (props: any, props2: any) => {
         },
         {
           field: "G3",
+         
           headerName: "G3",
           suppressMenu: true,
           width: widthWindow * 0.03,
+
           minWidth: 50,
           height: 30,
           maxWidth: 100,
@@ -292,7 +279,6 @@ const ColumnDef = (props: any, props2: any) => {
                   onDoubleClick={() =>
                     handleClick({ ma: params.data.MCK, price: value,SanT:SanT,TCT:TCT ,TranC:TranC ,key:"S" })
                   }
-                  onContextMenu={handleClickRight({ maF: params.data.MCK, priceF: value ,SanT:SanT,TCT:TCT ,TranC:TranC,dataPopup:dataPopup })}
                 >
                   {formatNumberMarket(value)}
                 </div>
@@ -365,7 +351,6 @@ const ColumnDef = (props: any, props2: any) => {
                   onDoubleClick={() =>
                     handleClick({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"S"})
                   }
-                  onContextMenu={handleClickRight({dataPopup:dataPopup, maF: params.data.MCK, priceF: value,SanT:SanT,TCT:TCT ,TranC:TranC,})}
 
                 >
                   {formatNumberMarket(value)}
@@ -437,7 +422,6 @@ const ColumnDef = (props: any, props2: any) => {
                   onDoubleClick={() =>
                     handleClick({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC ,key:"S"})
                   }
-                  onContextMenu={handleClickRight({dataPopup:dataPopup, maF: params.data.MCK, priceF: value ,SanT:SanT,TCT:TCT ,TranC:TranC })}
 
                 >
                   {formatNumberMarket(value)}
@@ -496,7 +480,7 @@ const ColumnDef = (props: any, props2: any) => {
             color: setColorMarkettest("", params),
             textAlign: "right",
           }),
-          cellRenderer: CellRender,
+          cellRenderer: CellOtherColorRender,
         },
         {
           field: "KLKhop",
@@ -512,21 +496,7 @@ const ColumnDef = (props: any, props2: any) => {
             color: setColorMarkettest("KLKhop", params),
             textAlign: "right",
           }),
-          cellRenderer: (params: any) => {
-            const dataIndex = RowDataIndex.KLKhop; // Get the index of the column= RowDataIndex.KL3; // Get the index of the column
-            const value = params.value; // Get the value of the cell
-            const rowid = params.data.RowID; // Get the
-
-            return (
-              <div
-                data-index={dataIndex}
-                data-comp={rowid}
-                className="custom-cell"
-              >
-                {formatNumberMarket(value)}
-              </div>
-            );
-          },
+          cellRenderer: CellOtherColorRender
         },
         {
           field: "Chenhlech",
@@ -543,15 +513,7 @@ const ColumnDef = (props: any, props2: any) => {
             color: setColorMarkettest("Chenhlech", params),
             textAlign: "right",
           }),
-          cellRenderer: (params: any) => {
-            const dataIndex = RowDataIndex.Chenhlech; // Get the index of the column= column ? allColumns.indexOf(column) : -1; // Get the index of the column
-            const value = params.value; // Get the value of the cell
-            return (
-              <div data-index={dataIndex} className="custom-cell">
-                {formatNumberMarket(value)}
-              </div>
-            );
-          },
+          cellRenderer: CellOtherColorRender
         },
         {
           field: "Chenhlech1",
@@ -595,11 +557,11 @@ const ColumnDef = (props: any, props2: any) => {
                 data-index={dataIndex} className="cursor-pointer custom-cell">
                 {showPrice && (
                   // <div style={{ color:   parseInt(valuePT) >= 0 ? "#00FF00" : "#FF0000", }}>
-                       <div style={{ color: setColorMarkettest("Chenhlech", params) }}>
+                       <div className="custom-cell-other" style={{ color: setColorMarkettest("Chenhlech", params) }}>
                     {formatNumberMarket(valuePT.trim())}
                   </div>
                 )}
-                <div style={{ color: setColorMarkettest("Chenhlech", params) }}>
+                <div className="custom-cell-other" style={{ color: setColorMarkettest("Chenhlech", params) }}>
                   {showPrice ? null : formatNumberMarket(valueCT.trim())}
                 </div>
               </div>
@@ -635,15 +597,7 @@ const ColumnDef = (props: any, props2: any) => {
             color: setColorMarkettest("Chenhlech", params),
             textAlign: "right",
           }),
-          cellRenderer: (params: any) => {
-            const dataIndex = RowDataIndex.Chenhlech; // Get the index of the column= column ? allColumns.indexOf(column) : -1; // Get the index of the column
-            const value = params.value; // Get the value of the cell
-            return (
-              <div data-index={dataIndex} className="custom-cell">
-                {formatNumberMarket(value)}
-              </div>
-            );
-          },
+          cellRenderer: CellOtherColorRender
         },
       ],
     },
@@ -681,9 +635,8 @@ const ColumnDef = (props: any, props2: any) => {
                   data-comp={rowid}
                   className="cursor-pointer custom-cell"
                   onDoubleClick={() =>
-                    handleClickBuy({ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
+                    handleClick({ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
                   }
-                  onContextMenu={handleClickRightBuy({dataPopup:dataPopup, maB: params.data.MCK, priceB: value,SanT:SanT,TCT:TCT ,TranC:TranC, })}
 
                 >
                   {formatNumberMarket(value)}
@@ -751,10 +704,8 @@ const ColumnDef = (props: any, props2: any) => {
                   data-comp={rowid}
                   className="cursor-pointer custom-cell"
                   onDoubleClick={() =>
-                    handleClickBuy({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
+                    handleClick({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
                   }
-                  onContextMenu={handleClickRightBuy({dataPopup:dataPopup, maB: params.data.MCK, priceB: value ,SanT:SanT,TCT:TCT ,TranC:TranC,})}
-
                 >
                   {formatNumberMarket(value)}
                 </div>
@@ -823,10 +774,8 @@ const ColumnDef = (props: any, props2: any) => {
                   data-comp={rowid}
                   className="cursor-pointer custom-cell"
                   onDoubleClick={() =>
-                    handleClickBuy({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
+                    handleClick({ ma: params.data.MCK, price: value ,SanT:SanT,TCT:TCT ,TranC:TranC,key:"B" })
                   }
-                  onContextMenu={handleClickRightBuy({ maB: params.data.MCK, priceB: value,SanT:SanT,TCT:TCT ,TranC:TranC})}
-
                 >
                   {formatNumberMarket(value)}
                 </div>
@@ -904,7 +853,7 @@ const ColumnDef = (props: any, props2: any) => {
       maxWidth: 100,
       headerClass: "custom-header tc-header",
       suppressMenu: true,
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "MOC",
@@ -921,7 +870,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "CaoNhat",
@@ -938,7 +887,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "ThapNhat",
@@ -954,7 +903,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
       suppressMenu: true,
     },
     {
@@ -971,7 +920,7 @@ const ColumnDef = (props: any, props2: any) => {
         color: setColorMarkettest("", params),
         textAlign: "right",
       }),
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
       suppressMenu: true,
     },
     {
@@ -984,7 +933,7 @@ const ColumnDef = (props: any, props2: any) => {
       cellClass: "score-cell tc-cell",
       headerClass: "custom-header tc-header",
       suppressMenu: true,
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "NNBan",
@@ -996,7 +945,7 @@ const ColumnDef = (props: any, props2: any) => {
       maxWidth: 100,
       headerClass: "custom-header tc-header",
       suppressMenu: true,
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
     {
       field: "RoomCL",
@@ -1008,7 +957,7 @@ const ColumnDef = (props: any, props2: any) => {
       cellClass: "score-cell tc-cell",
       headerClass: "custom-header  tc-header",
       suppressMenu: true,
-      cellRenderer: CellRender,
+      cellRenderer: CellOtherColorRender,
     },
   ], 
    [
@@ -1022,7 +971,6 @@ const ColumnDef = (props: any, props2: any) => {
     INDEX.cbcol28,
     INDEX.cbcol4,
     handleClick,
-    handleClickBuy,
     handleDoubleClick,
     handlePinRow,
     widthWindow,

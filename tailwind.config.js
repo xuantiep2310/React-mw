@@ -11,15 +11,25 @@ module.exports = {
       30: "30px",
       40: "40px",
       24: "24px",
+      7: "28px",
+      8: "32px",
+      3: "12px",
     },
     minHeight: {
       500: "500px",
       "1/2": "50%",
     },
-    extend: {},
+    extend: {
+      inset: {
+        9: "9px",
+        20: "20px",
+      },
+    },
     colors: {
       borderBodyTableMarket: "#505050",
       borderHeadTableMarket: "#858585",
+      borderTransfer: "#CCCCCC",
+      borderPopup: "#333",
       BGTableMarket: "#1D1D1D",
       BGTableHoverMarket: "#444444",
       textTableMarketTC: "#F7FF31",
@@ -57,8 +67,11 @@ module.exports = {
       bgFooterTable: "#131722",
       textHeaderTableGDTT: "#F7FFAA",
       bgPannelLink: "#dedede",
-      invert:'#646464'
+      invert: "#646464",
+      bgPopup: "#424242",
+      bgBoxPopupBorder: "#202020",
       //'tooltipNoti':'#2371af'
+      activeOrderMck: "rgba(99, 169, 224, 0.4)",
     },
     fontSize: {
       textHeadTableMarket: "0.675rem",
@@ -74,7 +87,7 @@ module.exports = {
       "5xl": "3.052rem",
       fontLogo: "26px",
       large: "large !important",
-      "13px": "13px",
+      13: "13px",
       "15px": "15px",
       "16px": "16px",
       "16pxi": "16px !important",

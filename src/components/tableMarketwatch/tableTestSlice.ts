@@ -3,7 +3,7 @@ import {
   createEntityAdapter,
   createSlice,
 } from "@reduxjs/toolkit";
-import { DataTable, DataGDTT } from "../../models/modelTableHNX";
+import { DataTable, DataGDTT  } from "../../models/modelTableHNX";
 import agent from "../../api/agent";
 import { TableParams } from "../../models/modelLinkTable";
 import { RootState } from "../../store/configureStore";
@@ -11,27 +11,46 @@ import { RootState } from "../../store/configureStore";
 import { tinhGiaTC } from "../../utils/util";
 import { RowData } from "../../models/tableMarketwatch";
 import { getCookie } from "../../models/cookie";
+import { VARIBLE_ACTICON_TYPE } from "./helper/varible";
 
 interface TableState {
+  activeFloor : number;
   productsLoaded: boolean;
   ListDataTable: DataTable[];
   productParams: TableParams;
   status: string;
   index: number;
-  floor: string;
+  // floor: string;
   NameFloor: string;
   DataPt: DataTable[];
   DataBi: DataGDTT[];
   RowPined: any;
   DataPined: any[];
-  KeyMenuChildren?: any,
-  keyActiveMan: number
+  KeyMenuChildren?: any;
+  keyActiveMan: number;
+  dataTableThongkeIndex: any[];
+  loadingTableThongke: number;
+  dataTableThongkePrice: any[];
+  paginationPageTbTKIndex: number;
+  paginationPageTbTKPrice: number;
+  paginationPageTbTKOrderLenh: number;
+  paginationPageTbTKKhopLenh: number;
+  paginationPageTbTKTH: number;
+  dataTableThongkeOrderLenh: any[];
+
+  dataTableThongkeKhopLenh: any[];
+
+  dataTableThongkeTH: any[];
+  stockCode: string;
+  keyMenu: string;
+  nameMenu: string;
+  floorMenu: string;
 }
 type params = {
   Floor: string;
   Query: string;
   RowPined: any;
-  KeyMenuChildren?: any 
+  KeyMenuChildren?: any;
 };
 const dataTableAdapter = createEntityAdapter<DataTable>({
   selectId: (dataTable) => dataTable.RowID || "", // Chỉ định trường khóa
@@ -42,7 +61,7 @@ export const getDataTable = createAsyncThunk(
   async (Param: params) => {
     try {
       if (Param.Query === "thoa-thuan-hsx") {
-        const DataBi = await agent.dataGDTTtable.listBi(Param.Floor);
+        const DataBi = await agent.dataGDTTtable.listBi("hnx");
         const DataPt = await agent.dataGDTTtable.listPt(Param.Floor);
         let data = {
           index: 1,
@@ -154,10 +173,45 @@ export const getDataTable = createAsyncThunk(
         return data;
       }
     } catch (error: any) {
-      console.error("error lỗi table slice ")
+      let data = {
+        index: 0,
+        floor: "MAIN",
+        NameFloor: Param.Floor,
+        RowPined: Param.RowPined,
+        product: [],
+        KeyMenuChildren: null,
+      };
+      return  data
+    
     }
   }
 );
+export const getdataTableThongKe = createAsyncThunk(
+  "table_thong_ke",
+  async () => {
+    try {
+      // mặc định call nhưng chưa biết nó để lmj
+      let params = "s=bi";
+
+      // const data = await agent.tableThongke.getdataThongke(params);
+    } catch (error) {}
+  }
+);
+export const SortTableThongkeIndex = createAsyncThunk(
+  "table_thongke_index",
+  async (query: any) => {
+    try {
+      const data = await agent.tableThongke.sortThongkeIndex(query?.result);
+      let result = {
+        action_type: query?.action,
+        data: data.Body,
+        panigation: data?.Header?.PageCount,
+      };
+      return result;
+    } catch (error) {}
+  }
+);
+//
 
 function initParams() {
   return {
@@ -169,11 +223,11 @@ function initParams() {
 export const tableTestSlice = createSlice({
   name: "table",
   initialState: dataTableAdapter.getInitialState<TableState>({
+    activeFloor : 0,
     productsLoaded: false,
     ListDataTable: [] as DataTable[],
     status: "idle",
     index: 0,
-    floor: "MAIN",
     DataBi: [] as DataGDTT[],
     DataPt: [] as DataTable[],
     RowPined: null,
@@ -181,7 +235,23 @@ export const tableTestSlice = createSlice({
     productParams: initParams(),
     DataPined: [],
     KeyMenuChildren: null,
-    keyActiveMan: 0
+    keyActiveMan: 0,
+    dataTableThongkeIndex: [],
+    dataTableThongkeTH: [],
+    dataTableThongkePrice: [],
+    dataTableThongkeOrderLenh: [],
+    dataTableThongkeKhopLenh: [],
+    loadingTableThongke: 0,
+    paginationPageTbTKIndex: 0,
+    paginationPageTbTKPrice: 0,
+    paginationPageTbTKOrderLenh: 0,
+    paginationPageTbTKKhopLenh: 0,
+    paginationPageTbTKTH: 0,
+    // table price thống kê
+    stockCode: "",
+    keyMenu: "" ,
+    nameMenu: "",
+    floorMenu: "",
   }),
   reducers: {
     setProductParams: (state, action) => {
@@ -230,7 +300,7 @@ export const tableTestSlice = createSlice({
       }
     },
     // tab menu cookie
-    getDataCookie: (state, action) => {
+    getDataCookie: (state ,action) => {
       let tab = localStorage.getItem("activePriceboardTabMenu");
       let StringCookie = { tab: tab, codeList: "" };
       const arraydata = getCookie(StringCookie); /// return array codelis
@@ -252,16 +322,28 @@ export const tableTestSlice = createSlice({
         state.DataPined = [...state.DataPined];
       }
     },
-    //  lịch sử giá 
-    handleHistoryPrices :(state,actions)=>{
-          state.KeyMenuChildren = 1
-          state.floor = "TableTK"
+    //  lịch sử giá
+    handleHistoryPrices: (state, action) => {
+      let { stockCode, keyMenu, nameMenu, floor } = action.payload;
+      state.KeyMenuChildren = 1;
+      state.activeFloor = 2;
+      state.stockCode = stockCode;
+      state.keyMenu = keyMenu;
+      state.nameMenu = nameMenu;
+      state.floorMenu = floor;
     },
-    HandleKeyActiveMain :(state)=>{
-      state.keyActiveMan = 1
+    HandleKeyActiveMain: (state) => {
+      state.keyActiveMan = 1;
+    },
+    handleSetStockCode: (state) => {
+      // reset lại stock code
+      state.stockCode = "";
+    },
+    // reset lại floor
+    HandleSetActiveFloor : (state ,action) => {
+      state.activeFloor = action.payload
     }
   },
-
   extraReducers: (builder) => {
     builder
       .addCase(getDataTable.pending, (state, action) => {
@@ -274,110 +356,147 @@ export const tableTestSlice = createSlice({
         state.productsLoaded = true;
         state.status = "idle";
         let data = action.payload;
+        
         let dataTable = data?.product;
         state.RowPined = data?.RowPined;
-            if (data?.index === 0) {
-              state.floor = "MAIN"
-              state.index = data?.index
-              const mergedArray = dataTable.map((element: any) => {
-                const infoArray = element.Info.map(
-                  (subArray: any[]) => subArray[1]
-                );
-                const mergedObject: RowData = {
-                  MCK: infoArray[0],
-                  TC: infoArray[1],
-                  Tran: infoArray[2],
-                  San: infoArray[3],
-                  KL4: infoArray[4],
-                  G3: infoArray[5],
-                  KL3: infoArray[6],
-                  G2: infoArray[7],
-                  KL2: infoArray[8],
-                  G1: infoArray[9],
-                  KL1: infoArray[10],
-                  GiaKhop: infoArray[11],
-                  KLKhop: infoArray[12],
-                  Chenhlech: infoArray[13],
-                  G1B: infoArray[14],
-                  KL1B: infoArray[15],
-                  G2B: infoArray[16],
-                  KL2B: infoArray[17],
-                  G3B: infoArray[18],
-                  KL3B: infoArray[19],
-                  KL4B: infoArray[20],
-                  TKL: infoArray[21],
-                  MOC: infoArray[22],
-                  CaoNhat: infoArray[23],
-                  ThapNhat: infoArray[24],
-                  GTB: infoArray[25],
-                  NNMua: infoArray[26],
-                  NNBan: infoArray[27],
-                  RoomCL: infoArray[28],
-                  GDK: infoArray[29],
-                  Quyen: infoArray[30],
-                  CGKGN: infoArray[31],
-                  Chenhlech1: `${infoArray[13]} | ${tinhGiaTC(
-                    infoArray[1],
-                    infoArray[11]
-                  )}`,
-                  PhanTram: tinhGiaTC(infoArray[1], infoArray[11]),
-                  RowID: element.RowID,
-                  isPined: false,
-                };
-                return mergedObject;
-              });
-              if (data?.RowPined) {
-                let indexCut = data?.RowPined;
-                let newdata = mergedArray ? mergedArray.splice(0, indexCut) : [];
-                state.DataPined = newdata.map((e: any) => {
-                  return { ...e, isPined: true };
-                });
-    
-                state.ListDataTable = mergedArray;
-              } else {
-                if (data.NameFloor === "HNX") {
-                  state.floor = "MAIN";
-                  state.ListDataTable = mergedArray;
-                  state.NameFloor = data?.NameFloor;
-                } else {
-                  state.floor = "MAIN";
-                  state.ListDataTable = mergedArray;
-                  state.NameFloor = data?.NameFloor;
-                }
-              }
-             
-            } else if (data?.index === 2) {
-              state.floor = "TableTK";
-              state.KeyMenuChildren = data?.KeyMenuChildren;
-              state.DataPt = data.product?.DataPt?.PUT_EXEC;
-              state.DataBi = data.product?.DataBi;
-              state.floor = "TableTK";
-              state.NameFloor = "HSX";
-            } else {       
-              if (data?.NameFloor === "HSX") {
-                state.DataPt = data.product?.DataPt?.PUT_EXEC;
-                state.DataBi = data.product?.DataBi;
-                state.floor = "GDTT";
-                state.NameFloor = "HSX";
-              } else {
-                state.DataPt = data?.product?.DataPt;
-                state.DataBi = data?.product?.DataBi;
-                state.floor = "GDTT";
-                state.NameFloor = "HNX";
-              }
-            
-          }       
+        if (data?.index === 0) {
+          state.index = data?.index;
+          const mergedArray = dataTable.map((element: any) => {
+            const infoArray = element.Info.map(
+              (subArray: any[]) => subArray[1]
+            );
+            const mergedObject: RowData = {
+              MCK: infoArray[0],
+              TC: infoArray[1],
+              Tran: infoArray[2],
+              San: infoArray[3],
+              KL4: infoArray[4],
+              G3: infoArray[5],
+              KL3: infoArray[6],
+              G2: infoArray[7],
+              KL2: infoArray[8],
+              G1: infoArray[9],
+              KL1: infoArray[10],
+              GiaKhop: infoArray[11],
+              KLKhop: infoArray[12],
+              Chenhlech: infoArray[13],
+              G1B: infoArray[14],
+              KL1B: infoArray[15],
+              G2B: infoArray[16],
+              KL2B: infoArray[17],
+              G3B: infoArray[18],
+              KL3B: infoArray[19],
+              KL4B: infoArray[20],
+              TKL: infoArray[21],
+              MOC: infoArray[22],
+              CaoNhat: infoArray[23],
+              ThapNhat: infoArray[24],
+              GTB: infoArray[25],
+              NNMua: infoArray[26],
+              NNBan: infoArray[27],
+              RoomCL: infoArray[28],
+              GDK: infoArray[29],
+              Quyen: infoArray[30],
+              CGKGN: infoArray[31],
+              Chenhlech1: `${infoArray[13]} | ${tinhGiaTC(
+                infoArray[1],
+                infoArray[11]
+              )}`,
+              PhanTram: tinhGiaTC(infoArray[1], infoArray[11]),
+              RowID: element.RowID,
+              isPined: false,
+            };
+            return mergedObject;
+          });
+          if (data?.RowPined) {
+            let indexCut = data?.RowPined;
+            let newdata = mergedArray ? mergedArray.splice(0, indexCut) : [];
+            state.DataPined  = newdata.map((e : any) => {
+              return { ...e, isPined: true };
+            });
+            state.ListDataTable = mergedArray;
+
+          } else {
+            if (data.NameFloor === "HNX") { 
+              state.ListDataTable = mergedArray;
+              state.NameFloor = data?.NameFloor;
+            } else {
+              state.ListDataTable = mergedArray;
+              state.NameFloor = data?.NameFloor;
+            }
+          }
+        } else if (data?.index === 2) {
+          // state.floor = "TableTK";
+          state.KeyMenuChildren = data?.KeyMenuChildren;
+          state.DataPt = data.product?.DataPt?.PUT_EXEC;
+          state.DataBi = data.product?.DataBi;
+          // state.floor = "TableTK";
+          state.NameFloor = "HSX";
+        } else {
+          if (data?.NameFloor === "HSX") {
+            state.DataPt = data.product?.DataPt?.PUT_EXEC;
+            state.DataBi = data.product?.DataBi;
+            // state.floor = "GDTT";
+            state.NameFloor = "HSX";
+          } else {
+            state.DataPt = data?.product?.DataPt;
+            state.DataBi = data?.product?.DataBi;
+            // state.floor = "GDTT";
+            state.NameFloor = "HNX";
+          }
+        }
+
       })
       .addCase(getDataTable.rejected, (state, action) => {
         state.DataBi = state.DataBi;
         state.DataPt = state.DataPt;
         state.NameFloor = state.NameFloor;
-        state.floor = "MAIN";
+        // state.floor = "MAIN";
         state.productsLoaded = true;
         state.status = "idle";
         state.ListDataTable = state.ListDataTable;
-       
-      });
+      })
+      // data table thống kê
+      .addCase(SortTableThongkeIndex.pending, (state) => {
+        state.loadingTableThongke = 1;
+      })
+      .addCase(SortTableThongkeIndex.fulfilled, (state, action) => {
+        state.loadingTableThongke = 2;
+
+        let data = action.payload;
+        if (data?.action_type === VARIBLE_ACTICON_TYPE.ACTION_INDEX) {
+          state.dataTableThongkeIndex = data?.data;
+          state.paginationPageTbTKIndex = data.panigation;
+        } else if (data?.action_type === VARIBLE_ACTICON_TYPE.ACTION_PRICE) {
+          // giá
+          state.dataTableThongkePrice = data?.data;
+          state.paginationPageTbTKPrice = data.panigation;
+        } else if (
+          data?.action_type === VARIBLE_ACTICON_TYPE.ACTION_ORDERLENH
+        ) {
+          // đặt lệnh
+          state.paginationPageTbTKOrderLenh = data.panigation;
+
+          state.dataTableThongkeOrderLenh = data?.data.map((e: any) => {
+            return e.Data;
+          });
+        } else if (data?.action_type === VARIBLE_ACTICON_TYPE.ACTION_GDKL) {
+          //khớp lệnh
+          state.paginationPageTbTKKhopLenh = data.panigation;
+          state.dataTableThongkeKhopLenh = data?.data.map((e: any) => {
+            return e.Data;
+          });
+        } else if (data?.action_type === VARIBLE_ACTICON_TYPE.ACTION_TH) {
+          //thỏa thuận
+          state.paginationPageTbTKTH = data.panigation;
+          state.dataTableThongkeTH = data?.data.map((e: any) => {
+            return e.Data;
+          });
+        }
+      })
+      .addCase(SortTableThongkeIndex.rejected, (state) => {
+        state.loadingTableThongke = 3;
+      })
   },
 });
 
@@ -385,5 +504,12 @@ export default tableTestSlice;
 export const productSelectors = dataTableAdapter.getSelectors(
   (state: RootState) => state.table
 );
-export const { setProductParams, addDatatPined, getDataCookie  ,handleHistoryPrices,HandleKeyActiveMain} =
-  tableTestSlice.actions;
+export const {
+  setProductParams,
+  addDatatPined,
+  getDataCookie,
+  handleHistoryPrices,
+  HandleKeyActiveMain,
+  handleSetStockCode,
+  HandleSetActiveFloor
+} = tableTestSlice.actions;
