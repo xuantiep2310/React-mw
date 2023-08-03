@@ -30,13 +30,15 @@ import AssetReport2 from "./pages/Report/AssetReport2/AssetReport";
 import ReportNAV from "./pages/Report/ReportNAV";
 import ReportTransSummary from "./pages/Report/ReportTransSummary";
 import StockDetails from "./pages/Report/StockDetails";
+import NotiHeader from "./components/header/NotiHeader";
 const  App: React.FC =()=> {
   return (
-    <div>
+    <div>                 
       <AppProvider>
        
       <Routes> 
           <Route path="/" element={<LayoutMarketWatch />} />
+          <Route path="/noti" element={<NotiHeader />} />
           <Route path="/test" element={<TableMarketWatchTest />} />
           <Route
             path="/dynamic-dashboard-test"

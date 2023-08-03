@@ -1,31 +1,244 @@
-import React, { useState } from 'react'
+import React, {LegacyRef, RefObject, useEffect, useRef, useState } from 'react'
 import bankCheckImage from "../../images/notification/bank-check.png";
-import coinsImage from "../../images/notification/coins.png";
-import giftboxImage from "../../images/notification/giftbox.png";
-import notificationImage from "../../images/notification/other_notification.png";
-import tabIconAsset from "../../images/notification/TabIcon_Asset.png";
+import coins from "../../images/notification/giftbox.png";
+import giftbox from "../../images/notification/giftbox.png";
+import other_notification from "../../images/notification/other_notification.png";
+import system_update from "../../images/notification/system_update.png";
+import TabIcon_Asset from "../../images/notification/TabIcon_Asset.png";
+import TabIcon_PlaceOrders from "../../images/notification/TabIcon_PlaceOrders.png";
+import payment from "../../images/notification/payment.png";
+import withdraw from "../../images/notification/withdraw.png";
+import money_bag from "../../images/notification/money-bag.png";
+import message from "../../images/notification/message.png";
+import transfer from "../../images/notification/transfer.png";
 // import investment from "../../images/notification/icon_investment_report_gray.svg";
 import arrowRightImage from "../../images/arrow_right-512.png";
-import investmentSVG from '../../images/notification/icon_investment_report_gray.svg'
-import { ReactComponent as TinvestmentSVG } from '../../images/notification/icon_investment_report_gray.svg'
+import icon_investment_report_gray from '../../images/notification/icon_investment_report_gray.svg'
 import { ReportIconSVG } from "../../icons/Report";
 import { relative } from "path";
 import { Box, IconButton,Tooltip,Popover } from '@mui/material';
+import { getMessagingToken, isTokenSentToServer, messaging, onMessageListener, saveToken } from '../firebase/noti/firebase';
+import { json } from 'stream/consumers';
+import axios from 'axios';
+import { List } from 'lodash';
+import { AnyGridOptions } from 'ag-grid-community';
+
+interface Noti {
+  ACLIENTCODE: string;
+  ACONTENT: string;
+  ACONTENT_EN: string;
+  ADATA: string;
+  AID: string;
+  AIMAGE: string;
+  AREADSTATUS: number;
+  ASCHEDULEDATE: string;
+  ASOURCE: string;
+  ASTATUS: number;
+  ASUBCONTENT: string;
+  ASUBCONTENT_EN: string;
+  ATARGETAPP: string;
+  ATITLE: string;
+  ATITLE_EN: string;
+  ATYPE: number;
+  AURL: string;
+}
+
+const aspfpt_language = "VN";
+
 const NotiHeader = () => {
     const [anchorEl, setanchorEl] = useState<null | HTMLElement>(null);
     const [openNoti, setOpenNoti] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(true);
+    const [countNotiUnRead, setCountNotiUnRead] = useState(0);
     const openPopupNoti = Boolean(anchorEl);
+    const [currPage, setCurrPage] = useState(0); // storing current page number
+    const [prevPage, setPrevPage] = useState(0); // storing prev page number
+    const [notiList, setNotiList] = useState<Array<Noti>>([]); // storing list
+    const [wasLastList, setWasLastList] = useState(false); // setting a flag to know the last list
+
+
+    const listInnerRef = useRef<HTMLDivElement>(null);
+    const onScroll = () => {
+      if (listInnerRef?.current) {
+        const { scrollTop, scrollHeight, clientHeight } = listInnerRef.current;
+        if (scrollTop + clientHeight === scrollHeight) {
+          // This will be triggered after hitting the last element.
+          // API call should be made here while implementing pagination.
+          if (scrollTop + clientHeight === scrollHeight) {
+            setCurrPage(currPage + 1);
+          }
+        }
+      }
+    };
+
     const handleCloseNoti = () => {
         setanchorEl(null);
       };
-      const handleClickNoti = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setanchorEl(event.currentTarget);
+    const handleClickNoti = (event: React.MouseEvent<HTMLButtonElement>) => {
+      setanchorEl(event.currentTarget);
+      setShowTooltip(false);
+    };
+    const handleClickOnOffNoti = (event: React.MouseEvent<HTMLElement>) => {
+      // console.log("clicked")
+      // loi : An SSL certificate error occurred when fetching the script
+      // https://stackoverflow.com/questions/46275659/register-service-worker-with-http
+      //Bật tắt notification
+
+      const checkbox = event.target as HTMLInputElement;
+      if (checkbox.checked) {
+        // console.log("Đã chọn"););
+
+          //Detecting browser's details
+          var nVer = navigator.appVersion;
+          var nAgt = navigator.userAgent;
+          var browserName = navigator.appName;
+          var fullVersion = '' + parseFloat(navigator.appVersion);
+          var majorVersion = parseInt(navigator.appVersion, 10);
+          var nameOffset, verOffset, ix;
+
+          // In Opera, the true version is after "Opera" or after "Version"
+          if ((verOffset = nAgt.indexOf("Opera")) !== -1) {
+              browserName = "Opera";
+              fullVersion = nAgt.substring(verOffset + 6);
+              if ((verOffset = nAgt.indexOf("Version")) !== -1)
+                  fullVersion = nAgt.substring(verOffset + 8);
+          }
+          // In MSIE, the true version is after "MSIE" in userAgent
+          else if ((verOffset = nAgt.indexOf("MSIE")) !== -1) {
+              browserName = "Microsoft Internet Explorer";
+              fullVersion = nAgt.substring(verOffset + 5);
+          }
+          // In Chrome, the true version is after "Chrome"
+          else if ((verOffset = nAgt.indexOf("Chrome")) !== -1) {
+              browserName = "Chrome";
+              fullVersion = nAgt.substring(verOffset + 7);
+          }
+          // In Safari, the true version is after "Safari" or after "Version"
+          else if ((verOffset = nAgt.indexOf("Safari")) !== -1) {
+              browserName = "Safari";
+              fullVersion = nAgt.substring(verOffset + 7);
+              if ((verOffset = nAgt.indexOf("Version")) !== -1)
+                  fullVersion = nAgt.substring(verOffset + 8);
+          }
+          // In Firefox, the true version is after "Firefox"
+          else if ((verOffset = nAgt.indexOf("Firefox")) !== -1) {
+              browserName = "Firefox";
+              fullVersion = nAgt.substring(verOffset + 8);
+          }
+          // In most other browsers, "name/version" is at the end of userAgent
+          else if ((nameOffset = nAgt.lastIndexOf(' ') + 1) <
+              (verOffset = nAgt.lastIndexOf('/'))) {
+              browserName = nAgt.substring(nameOffset, verOffset);
+              fullVersion = nAgt.substring(verOffset + 1);
+              if (browserName.toLowerCase() == browserName.toUpperCase()) {
+                  browserName = navigator.appName;
+              }
+          }
+          // trim the fullVersion string at semicolon/space if present
+          if ((ix = fullVersion.indexOf(";")) !== -1)
+              fullVersion = fullVersion.substring(0, ix);
+          if ((ix = fullVersion.indexOf(" ")) !== -1)
+              fullVersion = fullVersion.substring(0, ix);
+
+          majorVersion = parseInt('' + fullVersion, 10);
+          if (isNaN(majorVersion)) {
+              fullVersion = '' + parseFloat(navigator.appVersion);
+              majorVersion = parseInt(navigator.appVersion, 10);
+          }
+
+          if (browserName === "Chrome" || browserName === "Firefox" || browserName === "Opera") {
+              navigator.permissions.query({ name: 'notifications' }).then(function (result) {
+                  const channelActive = new BroadcastChannel("notificationActive");
+                  if (result.state === 'granted') {
+                      const tokenNoti = localStorage.getItem('tokenNoti');
+                      if (tokenNoti) {
+                          saveToken(tokenNoti);
+                          channelActive.postMessage({ active: 0 });
+                      } else {
+                          getMessagingToken();
+                          channelActive.postMessage({ active: 0 });
+                      }
+                  } else if (result.state === 'prompt') {
+                    if (messaging) {
+                      messaging.requestPermission().then(function () {
+                        if (isTokenSentToServer()) {
+                            console.log("already granted");
+                        }
+                        else {
+                            getMessagingToken();
+                            channelActive.postMessage({ active: 0 });
+                        }
+
+                      });
+                    }
+                  }
+                  // Don't do anything if the permission was denied.
+              });
+          }
+          else {
+              alert("Notifications không khả dụng với trình duyệt của bạn. Vui lòng sử dụng Google Chrome hoặc Firefox!");
+              // $(".container-bell").hide();
+              return;
+          }
+
+      } else {
+        // console.log("Không được chọn");
+        saveToken("");
+      }
+
+    };
+
+    // useEffect(() => {
+    //   //getMessagingToken();
+
+    //   //get notiunread
+    //   axios.post(`http://eztrade0.fpts.com.vn/api/ApiData/NotiSentGet`, {
+    //     Pagesize: 15,
+    //     Pageindex: currPage
+    //   })
+    //       .then((response: any) => {
+    //           setNoti(response?.data?.Data?.Table || []);
+    //           console.log(JSON.stringify(response?.data?.Data?.Table));
+    //       })
+    //       .catch((error) => {
+    //           console.error(error);
+    //       });
+      
+    // },[])
+
+    useEffect(() => {
+      const fetchData = async () => {
+        const response = await axios.post(`http://eztrade0.fpts.com.vn/api/ApiData/NotiSentGet`, {
+          Pagesize: 15,
+          Pageindex: currPage
+        })
+        if (!response.data.Data.Table.length) {
+          setWasLastList(true);
+          return;
+        }
+        setPrevPage(currPage);
+        setNotiList([...notiList, ...response.data.Data.Table]);
       };
-   
+      if (!wasLastList && prevPage !== currPage) {
+        fetchData();
+      }
+    }, []);
+    
+    // useEffect(() => {
+    //   onMessageListener().then(data => {
+    //       console.log("Receive foreground: ",data)
+    //   })
+    // })
+    // useEffect(() => {
+    //   getMessagingToken();
+    //   const channel = new BroadcastChannel("notifications");
+    //   channel.addEventListener("message", (event) => {
+    //     console.log("Receive background: ", event.data);
+    //   });
+    // },[])
+
   return (
     <Box className="eztrade__notification">
-          <Tooltip title="Thông báo">
-        
             <IconButton
               id="basic-button"
               aria-controls={openNoti ? "basic-menu1" : undefined}
@@ -34,38 +247,24 @@ const NotiHeader = () => {
               onClick={handleClickNoti}
               style={{position: "relative"}}
             >
-               {/* <div className="bell__button" id="bellButton">
-            <div className="bell__button__click" style={{paddingTop: '7px'}}>
-              <i className="fa fa-bell" aria-hidden="true" title="Thông báo" />
-              <span className="bell_count hidden__elem" id="bellCount" style={{display: 'flex'}}><span className="noti__value" id="notificationsCountValue">6</span></span>
-              <div id="tooltip-exchange__noti" style={{zIndex: 5, position: 'absolute', right: '-59px', top: '31px', display: 'block'}}>
-                <div style={{zIndex: 4, position: 'relative'}} id="spnTextTooltip">
-                  <span style={{background: '#2371af !important', color: 'white', padding: '8px 5px', borderRadius: '5px', boxShadow: '3px -2px 8px 1px #888'}}>
-                    Bật để nhận thông báo
-                  </span>
-                  <div id="selectSrvdiv" className="gb_srv" style={{top: '-3px', left: '56px', borderBottomColor: '#2371af'}} />
-                </div>
-              </div>
-            </div>
-          </div> */}
-       
               <Box
                 id="selectSrvdiv"
                 className="gb_srvNoti "
                 style={{ display: anchorEl ? "block" : "none" }}
-              ></Box>   
+              ></Box>
               <i className="fa fa-bell text-large text-iconNoti" aria-hidden="true"></i>
-              <span className="bell_count hidden__elem flex absolute top-0.5 right-1" id="bellCount" style={{ display: anchorEl ? "none" :"" }}><span className="noti__value" id="notificationsCountValue">6</span></span>
-              <div id="tooltip-exchange" style={{zIndex: 5, position: 'absolute', right: '-52px', top: '31px', display: !anchorEl ? "none" :""}}>
-        <div style={{zIndex: 4, position: 'relative'}} id="spnTextTooltip" className='text-spnTitlePanelBottom'>
-          <span className='bg-spnTitlePanelBottom text-13px' style={{color: 'white', padding: '8px 5px', borderRadius: '5px', boxShadow: '3px -2px 8px 1px #888'}}>
-            Bật để nhận thông báo
-          </span>
-          <div id="selectSrvdiv" className="gb_srv" style={{top: '-2px', left: '66px', borderBottomColor: '#2371af'}} />
-        </div>
-      </div>
+              <span className="bell_count hidden__elem flex absolute top-0.5 right-1" id="bellCount" style={{ display: anchorEl || countNotiUnRead === 0? "none" :"" }}>
+                <span className="noti__value" id="notificationsCountValue">{countNotiUnRead}</span>
+              </span>
+              <div id="tooltip-exchange" style={{zIndex: 99, position: 'absolute', right: '-51px', top: '29px', display: !showTooltip ? "none" :""}}>
+                <div style={{zIndex: 4, position: 'relative'}} id="spnTextTooltip" className='text-spnTitlePanelBottom'>
+                  <span className='bg-spnTitlePanelBottom text-13px' style={{color: 'white', padding: '8px 5px', borderRadius: '5px', boxShadow: '3px -2px 8px 1px #888'}}>
+                    Bật để nhận thông báo
+                  </span>
+                  <div id="selectSrvdiv" className="gb_srv" style={{top: '0px', left: '66px', borderBottomColor: '#2371af'}} />
+                </div>
+              </div>
             </IconButton>
-          </Tooltip>
           <Popover
             id="basic-menu1"
             anchorEl={anchorEl}
@@ -106,7 +305,7 @@ const NotiHeader = () => {
                       <div className="groupSwitch">
                         <span>Bật/tắt thông báo: </span>
                         <label className="switch switchNoti" id="switchLabel">
-                          <input type="checkbox" id="ckNotification" />
+                          <input type="checkbox" id="ckNotification" onClick={handleClickOnOffNoti}/>
                           <span className="slider round" id="spnNoti">
                             <span className="on">Bật</span>
                             <span className="off">Tắt</span>
@@ -121,482 +320,179 @@ const NotiHeader = () => {
                 <div
                   className="content__area scrollable__area"
                   id="scrollpagination"
+                  onScroll={onScroll}
+                  ref={listInnerRef}
                 >
                   <ul id="contentLoader">
+                    {notiList.map((item)=>{
+                      if (aspfpt_language == "VN") {
+                        var titleLang = item.ATITLE;
+                        var contentLangM = !item.ACONTENT ? item.ACONTENT : item.ACONTENT.replaceAll("\r\n", "<br>");
+                        var contentLangS = item.ACONTENT;
+                      }
+                      else {
+                          var titleLang = item.ATITLE_EN;
+                          var contentLangM = !item.ACONTENT_EN ? item.ACONTENT_EN : item.ACONTENT_EN.replaceAll("\r\n", "<br>");
+                          var contentLangS = item.ACONTENT_EN;
+                      }
+
+                      //Lấy thời gian tooltip & thời gian noti
+                      var creDate = new Date(item.ASCHEDULEDATE.toString()).getTime();
+                      // var d = new Date(parseFloat(creDate));
+                      // var hours = d.getHours();
+                      // var minutes = "0" + d.getMinutes();
+                      // var tooltipTime = d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + hours + ':' + minutes.substr(-2);
+                      // var date = new Date((item.ASCHEDULEDATE || "").replace(/-/g, "/").replace(/[TZ]/g, " ")),
+                      //     diff = (((new Date(dateTimeSys)).getTime() - date.getTime()) / 1000),
+                      //     day_diff = Math.floor(diff / 86400),
+                      //     getMonth = date.getMonth() + 1,
+                      //     dateFill = date.getDate() + "/" + getMonth + "/" + date.getFullYear();
+
+                      //week_diff = Math.floor(day_diff / 30);
+                      // if (isNaN(day_diff) || day_diff < 0 || day_diff >= 31)
+                      //     return;
+
+                    var img = "";
+                    
+                    if (item.ATYPE === 1) { // Khớp lệnh
+                      img = TabIcon_PlaceOrders
+                    }
+                    else if (item.ATYPE === 3) {	// Chuyển tiền
+                      img = TabIcon_Asset
+                    }
+                    else if (item.ATYPE === 1002) {	// Khớp lệnh thỏa thuận - TRADE
+                      img = TabIcon_PlaceOrders
+                    }
+                    else if (item.ATYPE === 8000) {	// Thông báo hệ thống - TRADE
+                      img = system_update
+                    }
+                    else if (item.ATYPE === 8500) {	// Thông báo hệ thống - ALL
+                      img = system_update
+                    }
+                    else if (item.ATYPE === 9000) {	// Thông báo hệ thống - FUTURES
+                      img = system_update
+                    }
+                    else if (item.ATYPE === 9100) {	// Khác - TRADE
+                      img = other_notification
+                    }
+                    else if (item.ATYPE === 9200) {	// Khác - FUTURES
+                      img = other_notification
+                    }
+                    else if (item.ATYPE === 9300) {	// Khác - ALL
+                      img = other_notification
+                    }
+                    else if (item.ATYPE === 9400) {	// Báo cáo TVDT - TRADE
+                      // img = icon_investment_report_gray
+                    }
+                    else if (item.ATYPE === 9500) {	// Chương trình KM cho KH MTK mới - TRADE
+                      img = giftbox
+                    }
+                    else if (item.ATYPE === 2000) {	// Nộp tiền - TRADE
+                      img = payment
+                    }
+                    else if (item.ATYPE === 2001) {	// Rút/chuyển tiền - TRADE
+                      img = withdraw
+                    }
+                    //-------------------------------------------------------- Noti EzCustody ----------------------------------------------------------//
+
+                    else if (item.ATYPE === 2100) {	// Lưu ký cổ phiếu giao dịch - TRADE
+                      img = coins
+                    }	
+                    else if (item.ATYPE === 2101) {	// Rút LK cổ phiếu giao dịch - TRADE
+                      img = TabIcon_Asset
+                    }	
+                    else if (item.ATYPE === 2102) {	// Phân bổ quyền tiền - TRADE
+                      img = money_bag
+                    }	
+                    else if (item.ATYPE === 2103) {	// Thanh toán chứng quyền đáo hạn - TRADE
+                      img = money_bag
+                    }	
+                    else if (item.ATYPE === 2104) {	// Phân bổ quyền CTCP/CP thưởng - TRADE
+                      img = coins
+                    }	
+                    else if (item.ATYPE === 2105) {	// Thực hiện quyền mua - TRADE
+                      img = message
+                    }	
+                    else if (item.ATYPE === 2106) {	// Phân bổ quyền mua - TRADE
+                      img = coins
+                    }	
+                    else if (item.ATYPE === 2107) {	// Phân bổ quyền chuyển sàn - TRADE
+                      img = transfer
+                    }	
+                    else if (item.ATYPE === 2108) {	// Rút hoán đổi/chuyển đổi - TRADE
+                      img = transfer
+                    }	
+                    else if (item.ATYPE === 2109) {	// Phân bổ quyền hoán đổi/chuyển đổi - TRADE
+                      img = transfer
+                    }
+
+                    //-------------------------------------------------------- /Noti EzCustody ----------------------------------------------------------//
+                    else if (item.ATYPE === 6000) {	// Nộp tiền phái sinh - FUTURES
+                      img = payment
+                    }
+                    else if (item.ATYPE === 6001) {	// Rút tiền phái sinh - FUTURES
+                      img = payment
+                    }
+                    else if (item.ATYPE === 1400) {	// Kích hoạt lệnh ezstoploss thành công - TRADE
+                      img = TabIcon_PlaceOrders
+                    }
+                    else if (item.ATYPE === 1401) {	// Kích hoạt lệnh ezstoploss thất bại - TRADE
+                      img = TabIcon_PlaceOrders
+                    }
+                    else {
+                      img = other_notification
+                    }
+                    
+                     return  (
                         <li>
                         <div className="anchorContainer">
                           <div className="content__loadmore">
                             <div className="img__content__lfloat">
-                            {/* <img src={TinvestmentSVG} alt="oke"/> */}
-                            <ReportIconSVG/>
+                            <img src={img} alt='img noti'/>
                             </div>
                             <div className="content__detail">
                               <div className="con__detail__title">
                                 <span className="content__detail__title">
-                                Báo cáo phân tích kỹ thuật mã TLH
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã TLH
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã TLH
-                              </span>
+                                    {titleLang}
+                                  <span />
+                                </span>
+                              </div>
+                              <div className="content__detail__content content__detail__content__short">
+                                <span className="con__detail__con contentLangS">
+                                {contentLangS}
+                                </span>
+                                <span
+                                  className="con__detail__con contentLangM"
+                                  style={{ display: "none" }}
+                                >
+                                  {contentLangM}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://ezadvisorselect.fpts.com.vn/InvestmentAdvisoryReport/InvestmentAdvisoryReportDetail?idRp=29-MAR-2023%2020:07:32.259394000"
-                              target="_blank"
+                          <div className="content__timestamp">
+                            <div
+                              className="content__loaddetails"
+                              id="contentLoadMore"
                             >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="30/3/2023 7:37">
-                            6 giờ
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Bản tin chứng khoán
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới quý khách hàng Bản tin chứng
-                                khoán ngày 29/03/2023
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
+                              <a
+                                href= {item.AURL}
+                                target="_blank"
+                                style={{display: item.AURL && item.AURL != "https://eztrade3.fpts.com.vn/notifications" ? "" : "none"}}
                               >
-                                FPTS xin gửi tới quý khách hàng Bản tin chứng
-                                khoán ngày 29/03/2023
-                              </span>
+                                <img src={arrowRightImage} />
+                              </a>    
                             </div>
+                            <span className="timer" title={item.ASCHEDULEDATE}>
+                              6 giờ
+                            </span>
                           </div>
                         </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="http://file.fpts.com.vn/FileStore2/File/2023/03/29/FIA20230329_be974c65.pdf"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="29/3/2023 17:05">
-                            21 giờ
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Bản tin chứng khoán
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 28/03/2023
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 28/03/2023
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="http://file.fpts.com.vn/FileStore2/File/2023/03/28/FIA20230328_ca59af02.pdf"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="28/3/2023 17:17">
-                            1 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                           <ReportIconSVG/>
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Báo cáo phân tích kỹ thuật mã IDC
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã IDC
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã IDC
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://ezadvisorselect.fpts.com.vn/InvestmentAdvisoryReport/InvestmentAdvisoryReportDetail?idRp=27-MAR-2023%2020:45:50.208477000"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="28/3/2023 7:30">
-                            2 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                           <ReportIconSVG/>
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Báo cáo phân tích kỹ thuật mã VCG
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã VCG
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã VCG
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://ezadvisorselect.fpts.com.vn/InvestmentAdvisoryReport/InvestmentAdvisoryReportDetail?idRp=27-MAR-2023%2021:41:50.031253000"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="28/3/2023 7:30">
-                            2 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Bản tin chứng khoán
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 27/03/2023
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 27/03/2023
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="http://file.fpts.com.vn/FileStore2/File/2023/03/27/FIA20230327_c9be9a2b.pdf"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="27/3/2023 17:36">
-                            2 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Hội thảo Triển vọng và Chiến lược đầu tư 2023
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới khách hàng link tham dự hội
-                                thảo trực tuyến Triển vọng và Chiến lược đầu tư
-                                2023
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới khách hàng link tham dự hội
-                                thảo trực tuyến Triển vọng và Chiến lược đầu tư
-                                2023
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://us06web.zoom.us/j/81213947166?pwd=RjZOeGRMcVV4QWN6OUR1THZ1UTBVQT09"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="25/3/2023 8:41">
-                            5 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                           <ReportIconSVG/>
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Báo cáo phân tích kỹ thuật mã IJC
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã IJC.
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới khách hàng Báo cáo phân tích kỹ
-                                thuật mã IJC.
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://ezadvisorselect.fpts.com.vn/InvestmentAdvisoryReport/InvestmentAdvisoryReportDetail?idRp=24-MAR-2023%2017:33:45.846774000"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="24/3/2023 17:57">
-                            5 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Bản tin chứng khoán
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 24/03/2023
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS xin gửi tới quý khách hàng bản tin chứng
-                                khoán ngày 24/03/2023
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="http://file.fpts.com.vn/FileStore2/File/2023/03/24/FIA20230324_3ee0601a.pdf"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="24/3/2023 17:30">
-                            5 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="anchorContainer">
-                        <div className="content__loadmore">
-                          <div className="img__content__lfloat">
-                            <img src={notificationImage} />
-                          </div>
-                          <div className="content__detail">
-                            <div className="con__detail__title">
-                              <span className="content__detail__title">
-                                Livestream Hội thảo "Triển vọng đầu tư cổ phiếu
-                                Dầu khí" - 26.03.2023
-                                <span />
-                              </span>
-                            </div>
-                            <div className="content__detail__content content__detail__content__short">
-                              <span className="con__detail__con contentLangS">
-                                FPTS kính mời Quý khách tham dự Livestream Hội
-                                thảo “Triển vọng đầu tư cổ phiếu Dầu khí: Cơ hội
-                                từ đơn giá dịch vụ cao và đón đầu đại dự án lớn
-                                chuẩn bị khởi công” trên Youtube vào lúc 8h30 –
-                                Chủ Nhật (26.03.2023). Quý khách vui lòng nhấn
-                                vào đường dẫn bên cạnh để tham dự buổi thuyết
-                                trình.
-                              </span>
-                              <span
-                                className="con__detail__con contentLangM"
-                                style={{ display: "none" }}
-                              >
-                                FPTS kính mời Quý khách tham dự Livestream Hội
-                                thảo “Triển vọng đầu tư cổ phiếu Dầu khí: Cơ hội
-                                từ đơn giá dịch vụ cao và đón đầu đại dự án lớn
-                                chuẩn bị khởi công” trên Youtube vào lúc 8h30 –
-                                Chủ Nhật (26.03.2023). Quý khách vui lòng nhấn
-                                vào đường dẫn bên cạnh để tham dự buổi thuyết
-                                trình.
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="content__timestamp">
-                          <div
-                            className="content__loaddetails"
-                            id="contentLoadMore"
-                          >
-                            <a
-                              href="https://www.youtube.com/watch?v=rB6fGNeDeys"
-                              target="_blank"
-                            >
-                              <img src={arrowRightImage} />
-                            </a>
-                          </div>
-                          <span className="timer" title="24/3/2023 14:04">
-                            6 ngày
-                          </span>
-                        </div>
-                      </div>
-                    </li>
+                      </li>
+                      )
+                    }
+                    )}
+                  
                   </ul>
                   <div
                     id="loading"
